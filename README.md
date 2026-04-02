@@ -16,12 +16,11 @@ npx skills add traceroot-ai/traceroot-skills --skill traceroot-instrument-repo
 
 ## Prerequisites
 
-You need a TraceRoot account ([cloud](https://app.traceroot.ai) or self-hosted) and an API key:
+You need a TraceRoot account ([cloud](https://app.traceroot.ai) or [self-hosted](https://traceroot.ai/docs/developer/self-hosting)) and an API key:
 
 ```bash
 export TRACEROOT_API_KEY=your-api-key
-# For self-hosted instances:
-export TRACEROOT_HOST_URL=https://your-instance.example.com
+export TRACEROOT_HOST_URL=https://app.traceroot.ai  # or self-host
 ```
 
-API keys are found in your TraceRoot project under **Settings > API Keys**.
+API keys are found in your TraceRoot project settings.
