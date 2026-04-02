@@ -6,7 +6,7 @@
 2. Set `TRACEROOT_API_KEY` in your `.env` file.
 3. Create `quickstart.py` with the code below.
 4. Run `python quickstart.py`.
-5. Open the Traceroot UI → Traces — filter for the `quickstart.root` trace.
+5. Open the TraceRoot UI → Traces — filter for the `quickstart.root` trace.
 
 ## quickstart.py
 

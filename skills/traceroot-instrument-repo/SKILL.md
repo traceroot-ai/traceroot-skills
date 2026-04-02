@@ -1,13 +1,13 @@
 ---
 name: traceroot-instrument-repo
 description: >
-  Instrument an existing Python codebase with Traceroot tracing. Use when
+  Instrument an existing Python codebase with TraceRoot tracing. Use when
   the user wants to add observability to their LLM application — whether
   starting fresh or adding to an existing project. Covers auto-instrumentation
   (OpenAI, LangChain, Anthropic) and manual spans with @observe.
 ---
 
-# Traceroot Instrument Repo
+# TraceRoot Instrument Repo
 
 ## Workflow
 
@@ -26,7 +26,7 @@ description: >
 
 6. For scripts or tests: add `traceroot.flush()` at exit.
 
-7. Run a representative flow and verify traces appear in the Traceroot UI.
+7. Run a representative flow and verify traces appear in the TraceRoot UI.
 
 ## References
 
