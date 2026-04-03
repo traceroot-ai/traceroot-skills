@@ -1,6 +1,6 @@
 # TraceRoot Skills
 
-Skills for TraceRoot: quickstart demo and codebase instrumentation.
+Skills for TraceRoot: quickstart demo and codebase instrumentation, for Python and TypeScript/Node.js.
 
 ## Install
 
