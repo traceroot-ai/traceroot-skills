@@ -9,14 +9,13 @@ import 'dotenv/config'; // must come before TraceRoot import
 import { TraceRoot } from '@traceroot-ai/traceroot';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
+import * as lcCallbackManager from '@langchain/core/callbacks/manager';
 
 TraceRoot.initialize({
   instrumentModules: {
     openAI: OpenAI,       // auto-instruments all OpenAI calls
     anthropic: Anthropic, // auto-instruments Anthropic calls
-    // langchain: lcCallbackManager,  // see LangChain note below
-    // bedrock: BedrockRuntimeClient,
-    // claudeAgentSDK: claudeAgentSDK,
+    langchain: lcCallbackManager,  // see LangChain note below
   },
   // Use only the modules present in the project
 });
