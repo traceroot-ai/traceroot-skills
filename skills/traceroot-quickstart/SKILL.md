@@ -1,22 +1,31 @@
 ---
 name: traceroot-quickstart
 description: >
-  Get a first TraceRoot trace running in minutes. Use when the user wants
-  to verify their TraceRoot setup, see a trace without an existing LLM app,
-  or confirm the API key and SDK are wired up correctly.
+  Produce a first TraceRoot trace in minutes. Use when the user wants to verify their TraceRoot
+  setup, send a test/first trace, confirm the API key and SDK are wired up correctly, or see a
+  trace appear without an existing LLM app — for Python or TypeScript/Node.js.
+metadata:
+  author: traceroot-ai
+  version: "1.0"
+compatibility: >
+  Python uses the `traceroot` package (pip). TypeScript/Node.js uses `@traceroot-ai/traceroot`
+  (npm). Both read TRACEROOT_API_KEY from the environment.
 ---
 
 # TraceRoot Quickstart
 
+A minimal runnable demo (no external LLM calls) that confirms TraceRoot is wired up correctly.
+
 ## Workflow
 
 1. Confirm the runtime: Python or TypeScript/Node.js.
-2. Confirm `TRACEROOT_API_KEY` is set in the environment. If not, ask the user to add it to their `.env` file (find it in the TraceRoot UI under project settings).
+2. Confirm `TRACEROOT_API_KEY` is set (environment or `.env`). If not, ask the user to add it (found in the TraceRoot UI under project settings), then stop until it is present.
 3. Install dependencies and create the quickstart script using the appropriate reference:
-   - Python: `references/python-quickstart.md`
-   - TypeScript/Node.js: `references/ts-quickstart.md`
-4. Run the script and direct the user to the TraceRoot UI → Traces view. The `quickstart.root` trace should appear within a few seconds.
-5. If no trace appears: verify `TRACEROOT_API_KEY` is loaded, and confirm flush is called at the end of the script (`traceroot.flush()` for Python, `await TraceRoot.flush()` for TypeScript).
+   - Python → `references/python-quickstart.md`
+   - TypeScript/Node.js → `references/ts-quickstart.md`
+4. Run the script. It prints the trace id and flushes before exit.
+5. Verify: direct the user to the TraceRoot UI → Traces. The `quickstart.root` trace should appear within a few seconds — they can search by the printed trace id to find it immediately.
+6. If no trace appears: confirm `TRACEROOT_API_KEY` is loaded (in Python, import `traceroot` after `load_dotenv()`), confirm flush is called at the end (`traceroot.flush()` / `await TraceRoot.flush()`), and for self-hosting confirm `TRACEROOT_HOST_URL` points at the right instance.
 
 ## References
 

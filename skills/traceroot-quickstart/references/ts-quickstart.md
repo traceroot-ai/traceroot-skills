@@ -5,14 +5,14 @@
 1. Install dependencies: `npm install @traceroot-ai/traceroot dotenv`
 2. Set `TRACEROOT_API_KEY` in your `.env` file.
 3. Create `quickstart.ts` with the code below.
-4. Run `npx tsx quickstart.ts`.
-5. Open the TraceRoot UI → Traces — filter for the `quickstart.root` trace.
+4. Run `npx tsx quickstart.ts` — it prints `traceId=...`.
+5. Open the TraceRoot UI → Traces — find the `quickstart.root` trace (search the printed trace id to locate it immediately).
 
 ## quickstart.ts
 
 ```typescript
 import 'dotenv/config';
-import { TraceRoot, observe } from '@traceroot-ai/traceroot';
+import { TraceRoot, observe, getCurrentTraceId } from '@traceroot-ai/traceroot';
 
 // Reads TRACEROOT_API_KEY from env automatically.
 // instrumentModules: {} disables auto-instrumentation — this demo only uses manual spans.
@@ -26,7 +26,9 @@ async function step() {
 
 async function main() {
   return await observe({ name: 'quickstart.root', type: 'agent' }, async () => {
-    return { result: await step() };
+    const result = { result: await step() };
+    console.log(`traceId=${getCurrentTraceId()}`); // search this in the TraceRoot UI → Traces
+    return result;
   });
 }
 
