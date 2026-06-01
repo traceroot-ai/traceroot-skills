@@ -4,8 +4,9 @@ description: >
   Add TraceRoot tracing/observability to an existing codebase. Use when the user wants to
   instrument their app, add tracing, set up LLM observability, add OpenTelemetry-based tracing,
   capture spans for agents/tools/LLM calls, or "add TraceRoot to my project" — for Python or
-  TypeScript/Node.js. Covers auto-instrumentation (OpenAI, Anthropic, LangChain, Bedrock, and
-  more) plus manual spans and user/session context.
+  TypeScript/Node.js. Covers auto-instrumentation for many LLM providers and agent frameworks
+  (OpenAI, Anthropic, LangChain, and more — see the docs integrations list) plus manual spans
+  and user/session context.
 metadata:
   author: traceroot-ai
   version: "1.0"
@@ -39,7 +40,7 @@ Confirm `TRACEROOT_API_KEY` is set (environment or `.env`). If not, ask the user
 
 ### 2. Analyze (read-only — do not edit yet)
 - Detect the runtime (Python or TypeScript/Node.js). Read the dependency manifest (`pyproject.toml`/`requirements.txt` or `package.json`) and scan imports to see what is actually used.
-- Identify the LLM providers/frameworks in use (OpenAI, Anthropic, LangChain/LangGraph, Bedrock, Vercel AI SDK, Mastra, etc.).
+- Identify the LLM providers/frameworks in use (OpenAI, Anthropic, LangChain/LangGraph, and others). Coverage differs by runtime and changes over time — the canonical list is https://traceroot.ai/docs/integrations/overview. Match each library you find to its integration in the language reference; don't assume a library is unsupported without checking the docs.
 - Check for **existing tracing/OpenTelemetry** (a `TracerProvider`, `opentelemetry` imports, another vendor's SDK) to avoid double-instrumentation.
 - Infer what user/session context is available:
 

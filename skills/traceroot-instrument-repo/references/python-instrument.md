@@ -23,6 +23,23 @@ traceroot.initialize(
 
 `TRACEROOT_API_KEY` is read from the environment automatically. No need to pass it explicitly.
 
+### Supported integrations
+
+TraceRoot auto-instruments many model providers and agent frameworks (OpenAI, Anthropic,
+LangChain/LangGraph, and more). The canonical, current list is the docs integrations overview:
+**https://traceroot.ai/docs/integrations/overview** — coverage changes over time, so treat the
+docs page (not this file) as the source of truth, and don't assume a library is unsupported
+without checking it.
+
+Pass only the `Integration.*` members for libraries the project actually uses. The enum names
+aren't always the obvious ones (e.g. Gemini is `Integration.GOOGLE_GENAI`), so rather than
+guessing, list the exact members available in the installed SDK:
+
+```python
+from traceroot import Integration
+print([i.name for i in Integration])  # exact members for your installed version
+```
+
 ## Add manual spans with `@observe`
 
 Use `@observe` on functions that represent meaningful steps: agent entrypoints, tool calls, orchestration logic.
