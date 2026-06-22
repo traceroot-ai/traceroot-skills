@@ -44,7 +44,7 @@ TraceRoot.initialize({
 Use `observe()` to wrap functions that represent meaningful steps: agent entrypoints, tool calls, orchestration logic.
 
 ```typescript
-import { observe } from '@traceroot-ai/traceroot';
+import { observe, updateCurrentSpan } from '@traceroot-ai/traceroot';
 
 // Agent entrypoint
 const result = await observe({ name: 'agent.run', type: 'agent' }, async () => {
