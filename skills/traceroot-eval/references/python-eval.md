@@ -69,14 +69,13 @@ def covers_both_cities(input, output, expected=None):
 
 
 if __name__ == "__main__":
+    # On a terminal this prints its own summary and the run URL — no manual print needed.
     result = evaluate(
         name="weather-no-conclusion",
         dataset=DATASET,
         task=task,
         scorers=[covers_both_cities],
     )
-    print(result.summary())
-    print("\nrun:", result.upload_state.dashboard_url)
 ```
 
 ## `evaluate()` parameters
@@ -146,16 +145,34 @@ child LLM span.
 
 ## Reading the result
 
+`evaluate()` prints its summary on completion whenever the progress bar is shown (interactive, or
+`progress=True`). Piped, in CI, or called programmatically, stdout stays clean and you read the
+result yourself:
+
 ```python
-run.summary()                    # per-metric means and counts, as a string — print it
-run.results                      # list[EvalItemResult]
-run.errored                      # count of cases with a task or scorer error
-run.not_scored                   # count of cases that produced no score
-run.upload_state.dashboard_url   # link to the reported run
+run.summary()                        # the same string it auto-prints
+run.results                          # list[EvalItemResult]
+run.errored                          # cases with a task or scorer error
+run.not_scored                       # cases that produced no score
+run.task_error_count                 # of those, the ones where the task itself raised
+run.scorer_error_count
+run.upload_state.dashboard_url       # link to the reported run
+run.upload_state.failed_result_count # per-case POSTs dropped; >0 means silently-missing results
 run.candidate_version
-run.save("run.json")             # EvalRunResult.load(path) reads it back
-case_status(item)                # per case: "errored" | "not_scored"
+run.save("run.json")                 # EvalRunResult.load(path) reads it back
+run.upload()                         # report a retained/loaded run later
+case_status(item)                    # per case: "errored" | "not_scored"
 ```
+
+`summary()` is a head line plus one line per metric:
+
+```
+EvalRunResult(name='weather-no-conclusion', cases=2, errored=0, not_scored=2, task_errors=0, upload=uploaded)
+  coverage: mean=1 pass=2/2 count=2
+```
+
+`pass=k/n` appears only for a metric whose scorer declared a `threshold`, and is resolved exactly
+as the platform resolves it — so the local pass-rate matches what the dashboard will show.
 
 Per-case status is `errored` or `not_scored` — there is no run-level pass/fail to read or compute.
 `aggregate_scores(...)` gives each metric's mean and count; numeric and boolean values contribute
@@ -168,5 +185,21 @@ scorer error too, rather than a fake zero or a null.
 ## Running without reporting
 
 Pass `local=True`. The run executes in full and returns a complete `EvalRunResult`, but reports
-nowhere — no credentials, no dataset publish, no run record. Use it while drafting, in unit tests,
-or anywhere a key is unavailable.
+nowhere — no credentials, no HTTP, no dataset publish, and a **non-exporting tracer**, so no spans
+leave the process either. Safe on a laptop or in CI without a key.
+
+One trade-off to name for the user: comparing candidates across `candidate_version` happens on the
+dashboard, so a local run has nothing to compare. Drafting is local; comparing is reported.
+
+## Asserting the wire in tests
+
+`local=True` discards the record of what *would* have been sent. When a test needs to assert that
+sequence, pass `transport=FakeTransport()` instead — it makes zero HTTP calls and records the exact
+call order in `.calls`:
+
+```
+create_run → register_item×N → record_item_result×N → record_scores×N → finish_run
+```
+
+`local=True` is that transport with the recorder thrown away. Use `local` to run; use
+`FakeTransport` to assert. Import it from `traceroot.eval`.

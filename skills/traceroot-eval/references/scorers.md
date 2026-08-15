@@ -58,10 +58,12 @@ This decides what you see on the platform, so be deliberate:
 | a `{metric: value}` map | each key |
 
 The scorer's `name` / `key` are its *definition* identity (how the platform tracks the same scorer
-across runs and languages); a returned `Score.name` is the *metric* label. They can differ — in the
-`Scorer.code` example below the scorer's key is `covers_both_cities` while the metric is
-`coverage`. That is legal and often what you want, but if you'd rather they match, say so
-explicitly by giving the `Score` the same name.
+across runs and languages); a returned `Score.name` is the *metric* label.
+
+They *can* differ, but usually shouldn't: once a run has more than one scorer, a threshold only
+applies to a score whose `name` matches its scorer's declared `name` (see "How a score finds its
+owning scorer" below). A mismatch silently costs that metric its pass/fail verdict. **Keep the
+scorer's `name` equal to the `Score` name you emit** — the examples below do exactly that.
 
 **TypeScript footgun:** a metric named after "the function" is named after the function's *actual*
 JS name. An inline arrow assigned to a `const` inside `Scorer.code(opts, fn)` has no usable name and
@@ -105,6 +107,7 @@ from traceroot import Score, Scorer
 
 @Scorer.code(
     key="covers_both_cities",       # stable semantic identity — set identically in TS
+    name="coverage",                # matches the Score name below, so the threshold applies
     value_type="numeric",           # "numeric" | "boolean" | "categorical"
     direction="higher_is_better",   # "higher_is_better" | "lower_is_better" | "none"
     threshold=1.0,                  # per-score `passed` is derived from this
@@ -125,6 +128,7 @@ import { Scorer, type Score, type ScorerContext } from "@traceroot-ai/traceroot"
 const coversBothCities = Scorer.code(
   {
     key: "covers_both_cities",
+    name: "coverage",              // matches the Score name below, so the threshold applies
     valueType: "numeric",
     direction: "higher_is_better",
     threshold: 1.0,
@@ -144,9 +148,20 @@ Python uses `snake_case` option names, TypeScript `camelCase`. Both also accept 
 `requiredInputs` (a subset of `input`, `output`, `expected`, `metadata`, `trace`).
 
 **Where `passed` comes from:** each emitted `Score` gets its own `passed`, derived from the
-declared `threshold` + `direction` of the scorer that produced it. A scorer with no declared
-threshold emits scores with no pass/fail verdict — that is fine and normal. There is never a
-case-level or run-level pass/fail.
+declared `threshold` (the pass boundary, inclusive) + `direction` of the scorer that produced it.
+A scorer with no declared threshold emits scores with no pass/fail verdict — that is fine and
+normal. There is never a case-level or run-level pass/fail.
+
+This is also what puts `pass=k/n` on a metric's line in `summary()`. No threshold, no pass-rate —
+just a mean and a count. If someone asks "how many passed?", that question needs rung 2.
+
+**How a score finds its owning scorer** (this is why the metric name matters): if the run has
+exactly one scorer and it emits exactly one score, that score is owned name-agnostically. In every
+other case the emitted score's `name` must match a declared scorer `name` for the threshold to
+apply. So the moment you have more than one scorer, a `Score` whose `name` doesn't match its
+scorer's declared `name` silently loses its pass/fail verdict. Either keep the names equal, or set
+the scorer's `name` to the metric you actually emit. The local `summary()` resolves ownership the
+same way the platform does, so what you see locally is what the dashboard shows.
 
 ## Rung 3 — `Scorer.llm_judge`: grading with a model
 
@@ -259,6 +274,13 @@ prompt captured as the scorer's versioned definition.
 A scorer that raises fails **that scorer on that case** — the other scorers still run, the case is
 marked `errored`, and the run completes. Don't wrap scorer bodies in try/except to return 0: a
 swallowed exception becomes a real-looking zero and hides the bug.
+
+## Inspecting what the platform will receive
+
+`describe_scorers([...])` / `describeScorers([...])` returns the descriptors your scorers report —
+name, key, version, value type, direction, threshold, and (for a judge) model and messages. Absent
+fields are omitted rather than invented. Use it to check that a threshold or key you meant to
+declare actually landed, before spending a run to find out.
 
 ## Aliases
 

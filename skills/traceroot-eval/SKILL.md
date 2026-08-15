@@ -20,7 +20,11 @@ compatibility: >
 
 Author an offline evaluation: a **dataset** of cases, a **task** that runs the system under test,
 and **scorers** that grade each output. `evaluate()` runs the task over every case, scores each
-result, and reports a trace-native run to the TraceRoot platform.
+result, and reports the run to the TraceRoot platform.
+
+Evaluation here is **trace-native**: every case runs as its own trace, with an
+`evaluation-item → task → scorer` span tree. An eval is a trace you can drill into, so a failing
+case is debuggable, not just a number.
 
 ## Rules (read first)
 
@@ -108,11 +112,21 @@ If anything real is still missing — no credentials, no task function, no real 
 exactly what you need. Hand over the script and name the blocker. Never fabricate a dashboard URL
 or a result, and never invent cases just to make the run go.
 
-Otherwise run the eval and confirm it landed:
-- The run prints a dashboard URL — share it as proof.
-- Print `result.summary()`; confirm every scorer you wrote appears as a metric with a mean. A
-  scorer that errored on every case reports no metric at all — that is a bug in the scorer, not a
-  zero score.
+Otherwise run the eval and confirm it landed. **On a terminal `evaluate()` prints its own summary
+and the dashboard URL** — don't add a `print(result.summary())` alongside it, that double-prints.
+(The auto-print is gated on the progress bar, so piped/CI/programmatic callers get clean stdout and
+read `result.summary()` themselves.) What you're checking:
+
+```
+EvalRunResult(name='routing-v1', cases=2, errored=0, not_scored=2, task_errors=0, upload=uploaded)
+  coverage: mean=1 pass=2/2 count=2
+```
+
+- Every scorer you wrote appears as a metric line. A scorer that errored on every case reports no
+  metric at all — that is a bug in the scorer, not a zero score.
+- `pass=k/n` appears **only** for a metric whose scorer declared a `threshold`. If you expected a
+  pass-rate and got none, the scorer is on rung 1 — give it a threshold via `Scorer.code`.
+- The dashboard URL — share it as proof.
 - Check for `errored` cases you didn't expect. `not_scored` means no score was emitted, not a
   failure.
 - If nothing reported, re-check `TRACEROOT_API_KEY` — or run with `local=True` if a local result is
@@ -131,6 +145,9 @@ Otherwise run the eval and confirm it landed:
 | Two scorers reporting the same metric name | `evaluate()` rejects it before any case runs. Give each a distinct `name`/`key`. |
 | `run_scorers` / `runScorers` | Removed. Aggregate across cases yourself from the returned result. |
 | Renaming an eval and losing its history | Keep `evaluation_key` / `evaluationKey` stable; `name` is only the display label. |
+| Printing the summary after `evaluate()` | It prints itself on a terminal. A manual print double-prints. |
+| Reporting tokens or cost from a local run | Cost is derived on the platform from span data. A local run emits no spans — there is nothing to read. Don't promise it. |
+| `local=True` while comparing candidates | Comparison across `candidate_version` lives on the dashboard; a local run reports nowhere, so there is nothing to compare. |
 
 ## References
 

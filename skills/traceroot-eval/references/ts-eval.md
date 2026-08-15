@@ -73,14 +73,13 @@ const coversBothCities = ({ input, output }: ScorerContext): Score => {
 };
 
 async function main() {
-  const result = await evaluate({
+  // On a terminal this logs its own summary and the run URL — no manual log needed.
+  await evaluate({
     name: "weather-no-conclusion",
     dataset: DATASET,
     task: (input) => task(input as WeatherInput),
     scorers: [coversBothCities],
   });
-  console.log(result.summary());
-  console.log("\nrun:", result.uploadState.dashboardUrl);
 }
 
 void main();
@@ -139,15 +138,31 @@ exports, which still work.
 
 ## Reading the result
 
+`evaluate()` logs its summary on completion whenever the progress bar is shown (interactive, or
+`progress: true`). Piped, in CI, or called programmatically, stdout stays clean and you read the
+result yourself:
+
 ```ts
-run.summary();                 // per-metric means and counts, as a string — log it
-run.results;                   // EvalItemResult[]
-run.errored;                   // count of cases with a task or scorer error
-run.notScored;                 // count of cases that produced no score
-run.uploadState.dashboardUrl;  // link to the reported run
+run.summary();                      // the same string it auto-logs
+run.results;                        // EvalItemResult[]
+run.errored;                        // cases with a task or scorer error
+run.notScored;                      // cases that produced no score
+run.uploadState.dashboardUrl;       // link to the reported run
+run.uploadState.failedResultCount;  // per-case POSTs dropped; >0 means silently-missing results
 run.candidateVersion;
-caseStatus(item);              // per case: "errored" | "not_scored"
+run.save("run.json");               // EvalRunResult.load(path) reads it back
+caseStatus(item);                   // per case: "errored" | "not_scored"
 ```
+
+`summary()` is a head line plus one line per metric, byte-identical to the Python output:
+
+```
+EvalRunResult(name='weather-no-conclusion', cases=2, errored=0, not_scored=2, task_errors=0, upload=uploaded)
+  coverage: mean=1 pass=2/2 count=2
+```
+
+`pass=k/n` appears only for a metric whose scorer declared a `threshold`, and is resolved exactly
+as the platform resolves it — so the local pass-rate matches what the dashboard will show.
 
 Per-case status is `"errored"` or `"not_scored"` — there is no run-level pass/fail to read or
 compute. `aggregateScores(...)` gives each metric's mean and count; numeric and boolean values
@@ -170,7 +185,15 @@ either language converges on the same dataset. Give a scorer the same `key` in b
 same logical scorer across runtimes. Option names differ only in casing (`valueType` vs
 `value_type`).
 
-## Saving a run
+## Asserting the wire in tests
 
-`run.save(path)` writes the result to disk and `EvalRunResult.load(path)` reads it back, for
-comparing runs offline or attaching one to a CI artifact.
+`local: true` reports nowhere and discards the record of what *would* have been sent. When a test
+needs to assert that sequence, pass `transport: new FakeTransport()` instead — it makes zero HTTP
+calls and records the exact call order in `.calls`:
+
+```
+create_run → register_item×N → record_item_result×N → record_scores×N → finish_run
+```
+
+`local: true` is that transport with the recorder thrown away. Use `local` to run; use
+`FakeTransport` to assert.

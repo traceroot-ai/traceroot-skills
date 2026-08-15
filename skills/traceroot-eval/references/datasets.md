@@ -51,6 +51,16 @@ content** — not its position. Consequences worth knowing:
 Ids are `ds_` + a sha256 prefix of the name for the dataset, and `tc_` + a sha256 prefix of
 (dataset key + canonical input + occurrence) for each case.
 
+### Passing your own `id=` is the exception
+
+`add(..., id="...")` pins a case to an id you supply — useful to tie a case back to an external
+system (a ticket number, a table row) for traceback. It **trades away the convergence above**: two
+people authoring the same case diverge if they pick different ids, and the cross-SDK guarantee no
+longer holds for that case. Reach for it only when the external link is the point; otherwise let
+the content derive the id.
+
+`update(id, **changes)` edits a case in place; `upsert(case)` adds or replaces by id.
+
 ## `evaluate()` provisions the dataset — do not push by hand
 
 Pass the local `Dataset` straight to `evaluate()`:
@@ -104,9 +114,23 @@ evaluates it. Loading does no network I/O.
 
 ## Pulling an existing dataset
 
-`pull_dataset(...)` / `pullDataset(...)` fetches a dataset that already lives on the platform (and
-`pull_dataset_version` / `pullDatasetVersion` a specific version). A pulled dataset is already
-synced, so `evaluate()` will not re-publish it.
+```python
+pull_dataset(dataset_id, *, version_id=None)          # the current version
+pull_dataset_version(version_id, *, dataset_id=None)  # one exact immutable version
+```
+
+TypeScript: `pullDataset`, `pullDatasetVersion`. A pulled dataset is already synced, so
+`evaluate()` will not re-publish it.
+
+**You pull data, not runs.** To reproduce what a past run scored, pull the exact
+`dataset_version_id` that run recorded, then bring your own task and scorers:
+
+```python
+ds = pull_dataset_version(run.dataset.dataset_version_id)
+```
+
+That is also how you re-run someone else's dataset against your candidate — the cases are shared,
+the task and scorers stay yours.
 
 ## Run provenance
 
