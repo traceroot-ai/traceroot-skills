@@ -53,9 +53,9 @@ until it is present. Without credentials `evaluate()` raises rather than running
 - Detect the runtime (Python or TypeScript/Node.js).
 - Find the **task**: the function that takes one input and returns the output to grade (an agent
   entrypoint, a chat handler, a RAG `answer()`). One case in → one output out.
-- Find **real inputs** for cases: existing fixtures, test data, logged queries, or traces in the
-  TraceRoot UI. If none exist, ask the user — do not fabricate a dataset.
-- Decide what "good" means for each case. Each distinct quality question is one scorer.
+- Find **real inputs** for cases: fixtures, test data, logged queries, or traces in the TraceRoot
+  UI. If none exist, ask the user — do not fabricate a dataset.
+- Each distinct quality question is one scorer.
 
 ### 3. Confirm scope (only if ambiguous)
 If the task function and the quality criteria are clear, proceed. If several entrypoints could be
@@ -84,22 +84,13 @@ One call — `evaluate()` publishes the local dataset (idempotent) and then runs
 ### 7. Verify (required — do not stop early)
 Run the eval and confirm it landed:
 - The run prints a dashboard URL — share it as proof.
-- Print `result.summary()`; confirm every scorer you wrote appears as a metric with a mean.
-- A good run has: every case executed, no `errored` cases you didn't expect, and each scorer's
-  metric present. A scorer that errored on every case reports no metric at all — that is a bug in
-  the scorer, not a zero score.
-- If the eval didn't report, re-check `TRACEROOT_API_KEY` (evaluation cannot run offline without an
-  explicit test transport).
-
-## Reading results
-
-| You want | Use |
-|---|---|
-| Per-metric means across the run | `result.summary()` |
-| Whether one score passed | that `Score`'s `passed` (from its scorer's `threshold`) |
-| Cases that blew up | per-case status `errored` (task error or scorer error) |
-| Cases that produced no score | per-case status `not_scored` |
-| A single run-level pass/fail | **does not exist** — do not compute or report one |
+- Print `result.summary()`; confirm every scorer you wrote appears as a metric with a mean. A
+  scorer that errored on every case reports no metric at all — that is a bug in the scorer, not a
+  zero score.
+- Check for `errored` cases you didn't expect. `not_scored` means no score was emitted, not a
+  failure.
+- If nothing reported, re-check `TRACEROOT_API_KEY` — evaluation cannot run offline without an
+  explicit test transport.
 
 ## Common mistakes
 
