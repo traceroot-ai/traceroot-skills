@@ -47,6 +47,28 @@ Scorers may be sync or async in both runtimes.
 A bare bool is the on-ramp. A `Score` adds the two things that make a run readable: an explicit
 metric name and a per-case `comment` explaining *why*.
 
+### Which name becomes the metric
+
+This decides what you see on the platform, so be deliberate:
+
+| Scorer returns | Metric name is |
+|---|---|
+| a `Score` | **the `Score`'s `name`** — it wins over everything on the scorer |
+| a bare bool/number | the scorer **function's** name |
+| a `{metric: value}` map | each key |
+
+The scorer's `name` / `key` are its *definition* identity (how the platform tracks the same scorer
+across runs and languages); a returned `Score.name` is the *metric* label. They can differ — in the
+`Scorer.code` example below the scorer's key is `covers_both_cities` while the metric is
+`coverage`. That is legal and often what you want, but if you'd rather they match, say so
+explicitly by giving the `Score` the same name.
+
+**TypeScript footgun:** a metric named after "the function" is named after the function's *actual*
+JS name. An inline arrow assigned to a `const` inside `Scorer.code(opts, fn)` has no usable name and
+the metric comes out as the literal `"scorer"` — the `name` in the options object does **not**
+rename it. In TypeScript, return an explicit `Score` (or use a named `function` declaration) rather
+than relying on inference.
+
 ```python
 from traceroot import Score
 
@@ -87,7 +109,7 @@ from traceroot import Score, Scorer
     direction="higher_is_better",   # "higher_is_better" | "lower_is_better" | "none"
     threshold=1.0,                  # per-score `passed` is derived from this
     description="1.0 when every requested city appears in the answer, else 0.0.",
-    metadata={"kind": "coverage"},
+    metadata={"kind": "coverage"},   # free-form labels carried on the scorer; optional
 )
 def covers_both_cities(ctx):
     hit = all(c.lower() in (ctx.output or "").lower() for c in ctx.input["cities"])
@@ -171,6 +193,12 @@ const noConclusion = Scorer.llmJudge({
 `messages` uses `{{input}}` / `{{output}}` / `{{expected}}` placeholders. `rubric="..."` is
 shorthand for a system message plus a `{{output}}` user message — pass `messages` **or** `rubric`,
 one is required.
+
+**The judge needs a provider key of its own.** With no `complete=` override, a model id starting
+`claude`/`anthropic` is called through the `anthropic` package (`ANTHROPIC_API_KEY`); anything else
+through `openai` (`OPENAI_API_KEY`). The package must be installed and the key set, or the judge
+raises part-way through the run. Pass `complete=(model, messages) -> str` to route the call
+yourself — that is also how you make a judge deterministic in tests.
 
 The judge contract is "reply with a single number and nothing else". An ambiguous reply is an
 isolated scorer error with the raw text preserved — never a silently wrong score. For a

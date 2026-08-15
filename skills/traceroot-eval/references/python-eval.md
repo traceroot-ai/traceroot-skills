@@ -124,12 +124,24 @@ from traceroot.eval import (
 `Scorer.code` and `Scorer.llm_judge` are the same callables as the older `scorer` / `llm_judge`
 imports, which still work.
 
+## Do you need `initialize()`?
+
+`evaluate()` resolves `TRACEROOT_API_KEY` from the environment on its own, so a plain eval runs
+without an explicit `initialize()`. Call it when you want the **task's own LLM calls traced** inside
+each case — that is what `integrations=[...]` turns on, and it is why the example above passes
+`traceroot.Integration.ANTHROPIC`. Without it the run still reports; the task span just has no
+child LLM span.
+
 ## Reading the result
 
 `EvalRunResult` carries the item results, the per-metric summary, the dataset reference, and
-`upload_state.dashboard_url`. Per-case status is `errored` or `not_scored` — there is no run-level
-pass/fail to read or compute. `aggregate_scores(...)` gives each metric's mean and count; numeric
-and boolean values contribute to the mean, categorical values to the count only.
+`upload_state.dashboard_url`. `summary()` returns a **string** — print it. Per-case status is
+`errored` or `not_scored` — there is no run-level pass/fail to read or compute.
+`aggregate_scores(...)` gives each metric's mean and count; numeric and boolean values contribute
+to the mean, categorical values to the count only.
+
+A scorer that raises fails that scorer on that case and marks the case `errored`; the run itself
+completes and reports. `errors()` returns the cases that hit a task or scorer error.
 
 ## Testing an eval offline
 

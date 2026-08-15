@@ -44,10 +44,16 @@ Turn the workflow below into a checklist (TodoWrite) and execute it in order.
 
 ## Workflow
 
-### 1. Precondition — API key
-Evaluation is cloud-only: every run reports to the platform. Confirm `TRACEROOT_API_KEY` is set
-(environment or `.env`). If not, ask the user to add it (TraceRoot UI → project settings) and stop
-until it is present. Without credentials `evaluate()` raises rather than running locally.
+### 1. Precondition — credentials
+Evaluation is cloud-only: every run reports to the platform.
+- Confirm `TRACEROOT_API_KEY` is set (environment or `.env`) — `traceroot status` reports whether
+  the SDK resolves it. If it is missing, ask the user to add it (TraceRoot UI → project settings)
+  and stop until it is present. Without it `evaluate()` raises rather than running locally.
+- **If you will write an LLM judge, check the provider key too.** `Scorer.llm_judge` calls the
+  provider directly — an `anthropic`/`claude` model needs the `anthropic` package and
+  `ANTHROPIC_API_KEY`; anything else goes to `openai` and needs `OPENAI_API_KEY`. A missing
+  provider key fails at scorer time, part-way through a run that already cost money. Check it
+  before you run, not after.
 
 ### 2. Analyze (read-only — do not edit yet)
 - Detect the runtime (Python or TypeScript/Node.js).
@@ -63,16 +69,32 @@ the system under test, state your plan in one line and ask before editing.
 
 ### 4. Author the dataset
 One `Dataset(name)` with the cases. The dataset's **name is its identity** — re-running the same
-name updates the same dataset with a new version rather than forking. See `references/datasets.md`.
+name updates the same dataset with a new version rather than forking.
+
+Two consequences to plan for now:
+- **The case `input` shape is part of the case's identity.** Ids derive from input content, so
+  changing the shape later rewrites every case id. If a scorer needs more than the raw user input
+  (the expected cities, a fixture id), put it in the input as a dict from the start and have the
+  task unwrap it.
+- **Editing cases later prompts before publishing.** On a terminal, a changed dataset under an
+  existing name asks `Publish a NEW version? [y/N]` and *defaults to no* — declining raises
+  `DatasetPublishAborted` and the run stops. That is intended. Answer `y`, or set
+  `TRACEROOT_ASSUME_YES=1` for unattended runs. Unchanged content never prompts.
+
+See `references/datasets.md`.
 
 ### 5. Write scorers — climb the ladder only as far as you need
-1. **Plain function** — the default. Returns a bool or number.
+1. **Plain function** — returns a bool or number. Enough when you want the metric recorded and
+   will read the mean yourself.
 2. **`Scorer.code(...)`** — adds declared policy (`value_type` / `direction` / `threshold`) and a
-   stable cross-language `key`. Use when you want a per-score pass/fail verdict or the same
-   logical scorer in both SDKs.
+   stable cross-language `key`. **A per-score `passed` verdict requires a declared `threshold`, so
+   any scorer you want pass/fail on belongs here** — in practice that is most of them.
 3. **`Scorer.llm_judge(...)` / `Scorer.llmJudge(...)`** — grading that needs a model. Static
    (declarative config only, no function body) or dynamic (a builder returning template variables
    per case).
+
+Rung 1 is the on-ramp, not a quota — climbing to rung 2 for a threshold is the normal case, and
+skipping it silently costs you the pass/fail signal.
 
 Full ladder with working code for both runtimes: `references/scorers.md`.
 
@@ -82,7 +104,11 @@ One call — `evaluate()` publishes the local dataset (idempotent) and then runs
 - TypeScript/Node.js → `references/ts-eval.md`
 
 ### 7. Verify (required — do not stop early)
-Run the eval and confirm it landed:
+If anything real is still missing — no credentials, no task function, no real cases — stop and say
+exactly what you need. Hand over the script and name the blocker. Never fabricate a dashboard URL
+or a result, and never invent cases just to make the run go.
+
+Otherwise run the eval and confirm it landed:
 - The run prints a dashboard URL — share it as proof.
 - Print `result.summary()`; confirm every scorer you wrote appears as a metric with a mean. A
   scorer that errored on every case reports no metric at all — that is a bug in the scorer, not a

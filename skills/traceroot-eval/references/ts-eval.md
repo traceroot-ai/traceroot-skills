@@ -134,9 +134,15 @@ exports, which still work.
 ## Reading the result
 
 `EvalRunResult` carries the item results, the per-metric summary, the dataset reference, and
-`uploadState.dashboardUrl`. `caseStatus(item)` returns `"errored"` or `"not_scored"` — there is no
-run-level pass/fail to read or compute. `aggregateScores(...)` gives each metric's mean and count;
-numeric and boolean values contribute to the mean, categorical values to the count only.
+`uploadState.dashboardUrl`. `summary()` returns a **string** — log it. `caseStatus(item)` returns
+`"errored"` or `"not_scored"` — there is no run-level pass/fail to read or compute.
+`aggregateScores(...)` gives each metric's mean and count; numeric and boolean values contribute to
+the mean, categorical values to the count only.
+
+**Do not use `result.passed`, `result.failed`, `result.failures()`, or `result.scoredCount`.** They
+filter on statuses `caseStatus()` never returns, so they are always `0`/empty regardless of how the
+run went. Use `errors()` for cases that hit a task or scorer error, and read the per-metric summary
+for everything else.
 
 ## Parity with Python
 
