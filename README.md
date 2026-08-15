@@ -6,12 +6,14 @@ Skills for adding [TraceRoot](https://traceroot.ai) tracing to your application,
 
 - **Add tracing to my app** → `traceroot-instrument-repo` — instruments an existing codebase: auto-instrumentation plus manual spans for agents, tools, and LLM calls.
 - **Just show me a trace / verify my setup** → `traceroot-quickstart` — a minimal runnable demo that produces one trace in a couple of minutes.
+- **Evaluate my LLM app** → `traceroot-eval` — offline evaluations: a dataset of cases, a task, and scorers (including LLM judges), run and reported to TraceRoot.
 
 ## Install
 
 ```bash
 npx skills add traceroot-ai/traceroot-skills --skill traceroot-instrument-repo
 npx skills add traceroot-ai/traceroot-skills --skill traceroot-quickstart
+npx skills add traceroot-ai/traceroot-skills --skill traceroot-eval
 ```
 
 Or point any coding agent (Claude Code, Codex, Cursor, …) at this repo:
