@@ -13,7 +13,7 @@ metadata:
   version: "1.0"
 compatibility: >
   Python uses the `traceroot` package (pip); TypeScript/Node.js uses `@traceroot-ai/traceroot`
-  (npm). Evaluation is cloud-only — every run reports to TraceRoot and needs TRACEROOT_API_KEY.
+  (npm). A run reports to TraceRoot and needs TRACEROOT_API_KEY, unless it asks to run locally.
 ---
 
 # TraceRoot Eval
@@ -45,10 +45,12 @@ Turn the workflow below into a checklist (TodoWrite) and execute it in order.
 ## Workflow
 
 ### 1. Precondition — credentials
-Evaluation is cloud-only: every run reports to the platform.
+A run reports to the platform unless you ask for a local one.
 - Confirm `TRACEROOT_API_KEY` is set (environment or `.env`) — `traceroot status` reports whether
-  the SDK resolves it. If it is missing, ask the user to add it (TraceRoot UI → project settings)
-  and stop until it is present. Without it `evaluate()` raises rather than running locally.
+  the SDK resolves it. If it is missing, ask the user to add it (TraceRoot UI → project settings).
+- **While drafting, or with no key available, pass `local=True` / `local: true`.** The run executes
+  in full and returns a complete result but reports nowhere — no credentials, no dataset publish,
+  no run record. That is the supported way to run without a key; don't reach for a test transport.
 - **If you will write an LLM judge, check the provider key too.** `Scorer.llm_judge` calls the
   provider directly — an `anthropic`/`claude` model needs the `anthropic` package and
   `ANTHROPIC_API_KEY`; anything else goes to `openai` and needs `OPENAI_API_KEY`. A missing
@@ -71,15 +73,13 @@ the system under test, state your plan in one line and ask before editing.
 One `Dataset(name)` with the cases. The dataset's **name is its identity** — re-running the same
 name updates the same dataset with a new version rather than forking.
 
-Two consequences to plan for now:
-- **The case `input` shape is part of the case's identity.** Ids derive from input content, so
-  changing the shape later rewrites every case id. If a scorer needs more than the raw user input
-  (the expected cities, a fixture id), put it in the input as a dict from the start and have the
-  task unwrap it.
-- **Editing cases later prompts before publishing.** On a terminal, a changed dataset under an
-  existing name asks `Publish a NEW version? [y/N]` and *defaults to no* — declining raises
-  `DatasetPublishAborted` and the run stops. That is intended. Answer `y`, or set
-  `TRACEROOT_ASSUME_YES=1` for unattended runs. Unchanged content never prompts.
+One consequence to plan for now: **the case `input` shape is part of the case's identity.** Ids
+derive from input content, so changing the shape later rewrites every case id. If a scorer needs
+more than the raw user input (the expected cities, a fixture id), put it in the input as a dict
+from the start and have the task unwrap it.
+
+`evaluate()` publishes the dataset for you and **never prompts** — it auto-approves the version so
+a run is never blocked waiting on `[y/N]`. Only an explicit `Dataset.push(...)` confirms first.
 
 See `references/datasets.md`.
 
@@ -115,8 +115,8 @@ Otherwise run the eval and confirm it landed:
   zero score.
 - Check for `errored` cases you didn't expect. `not_scored` means no score was emitted, not a
   failure.
-- If nothing reported, re-check `TRACEROOT_API_KEY` — evaluation cannot run offline without an
-  explicit test transport.
+- If nothing reported, re-check `TRACEROOT_API_KEY` — or run with `local=True` if a local result is
+  all you need right now.
 
 ## Common mistakes
 
@@ -128,6 +128,9 @@ Otherwise run the eval and confirm it landed:
 | Treating `not_scored` as a failure | It means no score was emitted, not a bad score. |
 | A new `Dataset` name per run | Reuse the name; edits become new versions of one dataset. |
 | Wrapping every scorer in `Scorer.code` | A plain function is the default. Wrap only for policy. |
+| Two scorers reporting the same metric name | `evaluate()` rejects it before any case runs. Give each a distinct `name`/`key`. |
+| `run_scorers` / `runScorers` | Removed. Aggregate across cases yourself from the returned result. |
+| Renaming an eval and losing its history | Keep `evaluation_key` / `evaluationKey` stable; `name` is only the display label. |
 
 ## References
 

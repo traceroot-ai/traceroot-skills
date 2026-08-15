@@ -66,9 +66,17 @@ write: no `ensure_synced()`, no `Dataset.push(PlatformDatasetSync())` before the
 Auto-provisioning is skipped when the dataset is already synced (pulled from the platform), when
 you pass an explicit `dataset_id` / `datasetId`, or when you pass an explicit transport.
 
-## The publish confirmation
+## `evaluate()` never prompts
 
-Publishing a **new version to an already-existing dataset** asks first, on an interactive terminal:
+A versioning decision must never block a run, so `evaluate()` **auto-approves** the version it
+publishes. Re-running an eval is silent and non-interactive even when the dataset content changed.
+Do not design around a prompt here, and do not tell a user to set an env var to get past one.
+
+## Explicit push (escape hatch) — this one *does* confirm
+
+`Dataset.push(transport)` is the deliberate publish boundary for workflows that version a dataset
+separately from running an eval. That is where interactive version management lives, so publishing
+a **changed** version to an already-existing dataset asks first, on a TTY:
 
 ```
 Dataset 'weather-no-conclusion' already exists (current version dsv_...). Publish a NEW version? [y/N]
@@ -78,20 +86,21 @@ The default is **no**, so an accidental Enter never publishes. Declining raises
 `DatasetPublishAborted` and creates no version.
 
 - Non-interactive contexts (CI, pipes) proceed silently — automation is never blocked.
-- `TRACEROOT_ASSUME_YES=1` skips the prompt everywhere.
+- `TRACEROOT_ASSUME_YES=1` skips the prompt.
+- An unchanged dataset is a no-op and does not prompt.
 
-An unchanged dataset is a no-op and does **not** prompt. If a script must publish edits
-unattended, set `TRACEROOT_ASSUME_YES=1` rather than restructuring the code.
-
-## Explicit push (escape hatch)
-
-`Dataset.push(transport)` still exists as the deliberate publish boundary for workflows that
-version a dataset separately from running an eval. Default transport is local-only (no network);
-pass `PlatformDatasetSync()` to publish. A stale `base_version_id` raises `DatasetConflictError` —
-pull the latest, review the diff, and retry intentionally.
+The default transport is local-only (no network); pass `PlatformDatasetSync()` to publish. A stale
+`base_version_id` raises `DatasetConflictError` — pull the latest, review the diff, and retry
+intentionally.
 
 Reach for this only when the user explicitly wants to publish without running an eval. For the
 normal path, `evaluate()` handles it.
+
+## Saving a dataset to disk
+
+`save(path)` / `Dataset.load(path)` round-trip a dataset through a local file (`.jsonl` carries a
+header record plus one case per line). Useful for committing a dataset next to the code that
+evaluates it. Loading does no network I/O.
 
 ## Pulling an existing dataset
 

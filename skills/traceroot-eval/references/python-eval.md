@@ -3,7 +3,7 @@
 ## Steps
 
 1. Install: `pip install traceroot python-dotenv` (plus whatever your task needs).
-2. Set `TRACEROOT_API_KEY` in `.env`. Evaluation is cloud-only — the run always reports.
+2. Set `TRACEROOT_API_KEY` in `.env` so the run reports — or pass `local=True` to skip reporting.
 3. Create the eval script (below) and run it: `python eval_weather.py`.
 4. Open the printed dashboard URL to see the run, its metrics, and each case's trace.
 
@@ -85,23 +85,32 @@ Keyword-only. `name`, `dataset`, `task`, `scorers` are what you need for a first
 
 | Parameter | Meaning |
 |---|---|
-| `name` | the evaluation's name (required) |
+| `name` | the evaluation's display name (required) |
 | `dataset` | a `Dataset`, a `DatasetSnapshot`, or a list of cases (required; `data=` is an alias) |
 | `task` | `callable(input) -> output` (required) |
 | `scorers` | sequence of scorer callables (required) |
-| `run_scorers` | whole-run scorers, given a read-only view of all item results |
+| `local` | `True` runs in full and reports **nowhere**; mutually exclusive with a transport |
+| `evaluation_key` | stable grouping identity; defaults to `name` |
 | `max_concurrency` | cases in flight, default `10` |
-| `timeout` | per-case bound in seconds; a timeout is an isolated per-case error |
+| `timeout` | per-case bound in seconds, bounding the task *and* its scorers |
 | `select` | `callable(EvalCase) -> bool` to run a subset |
 | `metadata` | free-form dict attached to the run record |
-| `candidate_version` | label for the version of the system under test |
+| `candidate_version` | label for the candidate under test (a git sha, a model id) |
 | `environment` | defaults to `"evaluation"` |
 | `dataset_id` | associate the run with an existing platform dataset (skips auto-provision) |
-| `transport` / `report_to` | explicit transport; `FakeTransport()` runs offline in tests |
+| `transport` / `report_to` | explicit reporting sink; prefer `local=True` for a local run |
 | `progress` | live console progress bar; default auto (on for a TTY, off when piped) |
 
-There is **no** `main_score` parameter. `retry` is deliberately not implemented and raises
-`NotImplementedError` rather than silently doing nothing.
+There is **no** `main_score` parameter, and **no `run_scorers`** — whole-run scorers were removed;
+aggregate across cases yourself from the returned result. `retry` is deliberately not implemented
+and raises `NotImplementedError` rather than silently doing nothing.
+
+`local=True` is the one-word local path — it is `transport=FakeTransport()` spelled as intent.
+Passing both raises.
+
+**`name` vs `evaluation_key`.** `name` is the display label; `evaluation_key` is the stable identity
+runs are grouped by (the same split as a scorer's `name` vs `key`). Set it to keep one history
+across a rename, or to group the Python and TypeScript runs of one evaluation.
 
 `evaluate_async(...)` is the async form. `Evaluation(...)` is the reusable object form — build it
 once, then `.run()` / `.run_async()`, optionally with per-run overrides.
@@ -114,10 +123,13 @@ callables run in a bounded thread pool, so the active span still parents anythin
 ## Imports
 
 ```python
-from traceroot import Dataset, Score, Scorer, evaluate      # the common surface
-from traceroot.eval import (
-    DeferredScore, EvalCase, ScorerContext, FakeTransport,  # richer surface
-    PlatformDatasetSync, DatasetPublishAborted, pull_dataset,
+from traceroot import (                                     # the common surface
+    Dataset, Score, Scorer, ScorerContext, EvalCase,
+    evaluate, evaluate_async, case_status,
+    pull_dataset, pull_dataset_version,
+)
+from traceroot.eval import (                                # richer surface
+    DeferredScore, FakeTransport, PlatformDatasetSync, DatasetPublishAborted,
 )
 ```
 
@@ -134,16 +146,27 @@ child LLM span.
 
 ## Reading the result
 
-`EvalRunResult` carries the item results, the per-metric summary, the dataset reference, and
-`upload_state.dashboard_url`. `summary()` returns a **string** — print it. Per-case status is
-`errored` or `not_scored` — there is no run-level pass/fail to read or compute.
+```python
+run.summary()                    # per-metric means and counts, as a string — print it
+run.results                      # list[EvalItemResult]
+run.errored                      # count of cases with a task or scorer error
+run.not_scored                   # count of cases that produced no score
+run.upload_state.dashboard_url   # link to the reported run
+run.candidate_version
+run.save("run.json")             # EvalRunResult.load(path) reads it back
+case_status(item)                # per case: "errored" | "not_scored"
+```
+
+Per-case status is `errored` or `not_scored` — there is no run-level pass/fail to read or compute.
 `aggregate_scores(...)` gives each metric's mean and count; numeric and boolean values contribute
 to the mean, categorical values to the count only.
 
 A scorer that raises fails that scorer on that case and marks the case `errored`; the run itself
-completes and reports. `errors()` returns the cases that hit a task or scorer error.
+completes and reports. A scorer that returns a non-finite number (`nan`, `inf`) is recorded as a
+scorer error too, rather than a fake zero or a null.
 
-## Testing an eval offline
+## Running without reporting
 
-Pass `transport=FakeTransport()` to exercise the engine without credentials or network. That is a
-test affordance — production runs report to the platform.
+Pass `local=True`. The run executes in full and returns a complete `EvalRunResult`, but reports
+nowhere — no credentials, no dataset publish, no run record. Use it while drafting, in unit tests,
+or anywhere a key is unavailable.

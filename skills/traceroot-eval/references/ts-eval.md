@@ -3,7 +3,7 @@
 ## Steps
 
 1. Install: `npm install @traceroot-ai/traceroot dotenv` (plus whatever your task needs).
-2. Set `TRACEROOT_API_KEY` in `.env`. Evaluation is cloud-only — the run always reports.
+2. Set `TRACEROOT_API_KEY` in `.env` so the run reports — or pass `local: true` to skip reporting.
 3. Create the eval script (below) and run it: `npx tsx eval-weather.ts`.
 4. Open the printed dashboard URL to see the run, its metrics, and each case's trace.
 
@@ -98,19 +98,25 @@ One options object. `name`, `task`, `scorers`, and `dataset` are what you need f
 | `dataset` | a `Dataset` or an array of cases (`data` is a back-compat alias) |
 | `task` | `(input) => output \| Promise<output>` (required) |
 | `scorers` | array of scorer functions (required) |
-| `runScorers` | whole-run scorers, given a read-only view of all item results |
+| `local` | `true` runs in full and reports **nowhere**; mutually exclusive with `transport` |
+| `evaluationKey` | stable grouping identity; defaults to `name` |
 | `maxConcurrency` | cases in flight |
-| `timeout` | per-case bound in seconds; a timeout is an isolated per-case error |
+| `timeout` | per-case bound in seconds, bounding the task *and* its scorers |
 | `select` | `(c: EvalCase) => boolean` to run a subset |
 | `metadata` | free-form record attached to the run record |
-| `candidateVersion` | label for the version of the system under test |
+| `candidateVersion` | label for the candidate under test (a git sha, a model id) |
 | `environment` | defaults to `"evaluation"` |
 | `datasetId` | associate the run with an existing platform dataset (skips auto-provision) |
-| `transport` | explicit transport; `new FakeTransport()` runs offline in tests |
+| `transport` | explicit reporting sink; prefer `local: true` for a local run |
 | `progress` | live console progress bar; default auto (on for a TTY, off when piped) |
 | `signal` | `AbortSignal` for cooperative cancellation (e.g. SIGINT) |
 
-There is **no** `mainScore` option.
+There is **no** `mainScore` option, and **no `runScorers`** — whole-run scorers were removed;
+aggregate across cases yourself from the returned result.
+
+**`name` vs `evaluationKey`.** `name` is the display label; `evaluationKey` is the stable identity
+runs are grouped by (the same split as a scorer's `name` vs `key`). Set it to keep one history
+across a rename, or to group the TypeScript and Python runs of one evaluation.
 
 `evaluateAsync(...)` is also exported, and `Evaluation` is the reusable object form.
 
@@ -133,16 +139,29 @@ exports, which still work.
 
 ## Reading the result
 
-`EvalRunResult` carries the item results, the per-metric summary, the dataset reference, and
-`uploadState.dashboardUrl`. `summary()` returns a **string** — log it. `caseStatus(item)` returns
-`"errored"` or `"not_scored"` — there is no run-level pass/fail to read or compute.
-`aggregateScores(...)` gives each metric's mean and count; numeric and boolean values contribute to
-the mean, categorical values to the count only.
+```ts
+run.summary();                 // per-metric means and counts, as a string — log it
+run.results;                   // EvalItemResult[]
+run.errored;                   // count of cases with a task or scorer error
+run.notScored;                 // count of cases that produced no score
+run.uploadState.dashboardUrl;  // link to the reported run
+run.candidateVersion;
+caseStatus(item);              // per case: "errored" | "not_scored"
+```
 
-**Do not use `result.passed`, `result.failed`, `result.failures()`, or `result.scoredCount`.** They
-filter on statuses `caseStatus()` never returns, so they are always `0`/empty regardless of how the
-run went. Use `errors()` for cases that hit a task or scorer error, and read the per-metric summary
-for everything else.
+Per-case status is `"errored"` or `"not_scored"` — there is no run-level pass/fail to read or
+compute. `aggregateScores(...)` gives each metric's mean and count; numeric and boolean values
+contribute to the mean, categorical values to the count only.
+
+A scorer that throws fails that scorer on that case and marks the case `errored`; the run itself
+completes and reports. A scorer that returns a non-finite number (`NaN`, `Infinity`) is recorded as
+a scorer error too, rather than a fake zero or a null.
+
+## Running without reporting
+
+Pass `local: true`. The run executes in full and returns a complete `EvalRunResult`, but reports
+nowhere — no credentials, no dataset publish, no run record. Use it while drafting, in unit tests,
+or anywhere a key is unavailable.
 
 ## Parity with Python
 
@@ -151,7 +170,7 @@ either language converges on the same dataset. Give a scorer the same `key` in b
 same logical scorer across runtimes. Option names differ only in casing (`valueType` vs
 `value_type`).
 
-## Testing an eval offline
+## Saving a run
 
-Pass `transport: new FakeTransport()` to exercise the engine without credentials or network. That
-is a test affordance — production runs report to the platform.
+`run.save(path)` writes the result to disk and `EvalRunResult.load(path)` reads it back, for
+comparing runs offline or attaching one to a CI artifact.
