@@ -151,6 +151,10 @@ EvalRunResult(name='routing-v1', cases=2, errored=0, not_scored=2, task_errors=0
 
 ## References
 
+Exact signatures, argument names, and return shapes are re-verified in the canonical API reference
+(`17-08-2026/docs/eval-sdk-api-reference.md` in the TraceRoot workspace, generated from the
+`feat/offline-eval-epic` source). If a snippet here ever disagrees with it, that file wins.
+
 - `references/scorers.md` — the scorer ladder, `Score` objects, thresholds and per-score pass/fail
 - `references/datasets.md` — dataset identity, versions, the publish confirmation, pulling
 - `references/python-eval.md` — Python: complete runnable eval, exact signatures

@@ -59,7 +59,16 @@ people authoring the same case diverge if they pick different ids, and the cross
 longer holds for that case. Reach for it only when the external link is the point; otherwise let
 the content derive the id.
 
-`update(id, **changes)` edits a case in place; `upsert(case)` adds or replaces by id.
+`update(id, **changes)` edits a case in place (and rejects a change of `id`); `upsert(case)` adds or
+replaces by id; `archive(id)` soft-archives for lineage; `remove(id)` hard-deletes.
+
+### TypeScript shape differences
+
+- **Count is `dataset.size`, a getter — not `.length`.** Python uses `len(dataset)`.
+- `dataset.datasetId` is a plain field; `dataset.key` is a **rejecting getter** — assigning to it
+  throws, because identity is fixed at construction.
+- `push` takes three arguments: `push(transport?, baseVersionId?, { onExisting })`. Python's is
+  `push(transport=None, *, base_version_id=None, on_existing=None)`.
 
 ## `evaluate()` provisions the dataset — do not push by hand
 
@@ -101,7 +110,12 @@ The default is **no**, so an accidental Enter never publishes. Declining raises
 
 The default transport is local-only (no network); pass `PlatformDatasetSync()` to publish. A stale
 `base_version_id` raises `DatasetConflictError` — pull the latest, review the diff, and retry
-intentionally.
+intentionally. Answer the confirmation programmatically with `on_existing=lambda info: True` (py) /
+`{ onExisting: () => true }` (ts).
+
+`push` returns a `PushResult`: `status` — the literal `"local_only"` or `"uploaded"` — plus the
+dataset id, an optional version id, and an optional version number. `status == "local_only"` is how
+you tell that nothing was published because the default transport was still in place.
 
 Reach for this only when the user explicitly wants to publish without running an eval. For the
 normal path, `evaluate()` handles it.
@@ -126,11 +140,16 @@ TypeScript: `pullDataset`, `pullDatasetVersion`. A pulled dataset is already syn
 `dataset_version_id` that run recorded, then bring your own task and scorers:
 
 ```python
-ds = pull_dataset_version(run.dataset.dataset_version_id)
+replay = pull_dataset_version(run.dataset.dataset_version_id, dataset_id=ds.dataset_id)
+evaluate(name="x-replay", dataset=replay, task=task, scorers=[s], local=True)
 ```
 
-That is also how you re-run someone else's dataset against your candidate — the cases are shared,
-the task and scorers stay yours.
+Run the replay with `local=True` so reproducing a past run doesn't pollute the reported history.
+Passing `dataset_id=` validates that the version actually belongs to that dataset — a foreign
+version raises instead of quietly returning the wrong cases.
+
+This is also how you re-run someone else's dataset against your candidate: the cases are shared,
+the task and scorers stay yours. There is deliberately no `pull_run`.
 
 ## Run provenance
 

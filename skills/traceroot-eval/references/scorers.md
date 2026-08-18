@@ -147,6 +147,10 @@ Python uses `snake_case` option names, TypeScript `camelCase`. Both also accept 
 `output_type` / `outputType` (`"score"` | `"classification"`), and `required_inputs` /
 `requiredInputs` (a subset of `input`, `output`, `expected`, `metadata`, `trace`).
 
+`trace` is accepted in that list but **reserved** — `ScorerContext` has exactly four fields and
+carries no trace, so a scorer cannot read `ctx.trace`. Declaring it documents an intent the runtime
+does not yet satisfy.
+
 **Where `passed` comes from:** each emitted `Score` gets its own `passed`, derived from the
 declared `threshold` (the pass boundary, inclusive) + `direction` of the scorer that produced it.
 A scorer with no declared threshold emits scores with no pass/fail verdict — that is fine and
@@ -257,9 +261,13 @@ const comparisonPresent = Scorer.llmJudge(
 );
 ```
 
+The builder must be **synchronous in Python**; TypeScript allows an async one.
+
 An LLM judge is a **convenience, not a required concept** — a hand-written function that calls a
 model and returns a float is a perfectly good scorer (rung 1). Use the helper when you want the
-prompt captured as the scorer's versioned definition.
+prompt captured as the scorer's versioned definition. The judge emits its own LLM span with token
+attributes only when no provider integration is already tracing that model, and a stubbed
+`complete` reports no token usage at all.
 
 ## Naming and cross-language identity
 
@@ -284,6 +292,15 @@ declare actually landed, before spending a run to find out.
 
 ## Aliases
 
-`scorer` and `llm_judge` (Python) / `scorer` and `llmJudge` (TypeScript) remain importable and
-behave identically — `Scorer.code` and `Scorer.llm_judge` are the same functions under one
-namespace. Write new code against the `Scorer` namespace.
+`scorer` and `llm_judge` (Python) / `scorer` and `llmJudge` (TypeScript) remain importable — they
+are the same callables `Scorer.code` and `Scorer.llm_judge` wrap. Write new code against the
+`Scorer` namespace.
+
+**One catch in TypeScript: the argument order flips.** `Scorer.code(opts, fn)` takes options first;
+the standalone `scorer(fn, opts)` takes the function first. They are not drop-in substitutes for
+each other, so don't rewrite one into the other by deleting the namespace. Python has no such flip
+— `Scorer.code` *is* `scorer`, function-first with keyword options, usable bare (`@scorer`), with
+arguments, or as an adapter over an existing callable (`Scorer.code(fn, threshold=1.0)`).
+
+`Scorer` itself is a class with static methods in Python and a plain object literal
+`{ code, llmJudge }` in TypeScript.

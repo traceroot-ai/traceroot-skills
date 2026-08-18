@@ -195,5 +195,7 @@ calls and records the exact call order in `.calls`:
 create_run → register_item×N → record_item_result×N → record_scores×N → finish_run
 ```
 
-`local: true` is that transport with the recorder thrown away. Use `local` to run; use
-`FakeTransport` to assert.
+`local: true` reports nowhere like a `FakeTransport` whose record is thrown away — but it is not
+identical: `FakeTransport` runs the normal exporting tracer (spans can still be exported), whereas
+`local: true` uses a non-exporting tracer and suppresses global auto-init. Use `local` to run
+leak-free; use `FakeTransport` to assert the wire.

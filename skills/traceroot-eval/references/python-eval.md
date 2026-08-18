@@ -104,8 +104,10 @@ There is **no** `main_score` parameter, and **no `run_scorers`** — whole-run s
 aggregate across cases yourself from the returned result. `retry` is deliberately not implemented
 and raises `NotImplementedError` rather than silently doing nothing.
 
-`local=True` is the one-word local path — it is `transport=FakeTransport()` spelled as intent.
-Passing both raises.
+`local=True` is the one-word local path — run in full, report nowhere. It is close to
+`transport=FakeTransport()` but goes further: it also installs a **non-exporting tracer** (zero
+spans leave the process) and suppresses global auto-init, which a bare `FakeTransport` does not.
+Passing `local=True` and a `transport` together raises.
 
 **`name` vs `evaluation_key`.** `name` is the display label; `evaluation_key` is the stable identity
 runs are grouped by (the same split as a scorer's `name` vs `key`). Set it to keep one history
@@ -121,14 +123,26 @@ callables run in a bounded thread pool, so the active span still parents anythin
 
 ## Imports
 
+Python has a real top-level/submodule split — unlike TypeScript, where everything comes from the
+package root. The authoring surface is top-level:
+
 ```python
-from traceroot import (                                     # the common surface
-    Dataset, Score, Scorer, ScorerContext, EvalCase,
-    evaluate, evaluate_async, case_status,
+from traceroot import (
+    Dataset, DatasetSnapshot, EvalCase, Score, DeferredScore,
+    Scorer, ScorerContext, scorer, llm_judge,
+    Evaluation, evaluate, evaluate_async,
+    EvalRunResult, EvalItemResult, RunDatasetRef, ScoreSummary, UploadState, case_status,
     pull_dataset, pull_dataset_version,
+    DatasetConflictError, DatasetPublishAborted, EvalCompletionError,
 )
-from traceroot.eval import (                                # richer surface
-    DeferredScore, FakeTransport, PlatformDatasetSync, DatasetPublishAborted,
+```
+
+Transports, dataset sync, and the introspection helpers live **only** under `traceroot.eval`:
+
+```python
+from traceroot.eval import (
+    describe_scorers, aggregate_scores,
+    FakeTransport, PlatformTransport, PlatformDatasetSync, LocalDatasetSync, PushResult,
 )
 ```
 
@@ -201,5 +215,7 @@ call order in `.calls`:
 create_run → register_item×N → record_item_result×N → record_scores×N → finish_run
 ```
 
-`local=True` is that transport with the recorder thrown away. Use `local` to run; use
-`FakeTransport` to assert. Import it from `traceroot.eval`.
+`local=True` reports nowhere like a `FakeTransport` whose record is thrown away — but it is not
+identical: `FakeTransport` runs the normal exporting tracer (spans can still be exported), whereas
+`local=True` uses a non-exporting tracer and suppresses auto-init. Use `local` to run leak-free; use
+`FakeTransport` to assert the wire. Import it from `traceroot.eval`.
