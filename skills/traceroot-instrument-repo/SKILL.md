@@ -61,6 +61,8 @@ Install the SDK and initialize **once, at the entry point, before any LLM librar
 ### 5. Add spans
 Wrap agent entrypoints, tool functions, and key orchestration steps (`@observe` / `observe()`), attaching the user/session context inferred in step 2. Prefer auto-instrumentation; add manual spans only where they add signal (see "What to instrument" in the reference).
 
+Before wrapping a function, check what it returns. If it returns a stream, an iterator, or any handle to work that continues after the return, `observe()` will close the span too early — use `async function*` or the imperative `startSpan` API from the language reference instead.
+
 ### 6. Verify (required — do not stop early)
 Run a representative flow, then confirm the trace landed:
 - If the SDK prints a trace URL, share it as proof.
