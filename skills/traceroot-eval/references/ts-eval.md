@@ -20,7 +20,7 @@ import {
   type Score, type ScorerContext,
 } from "@traceroot-ai/traceroot";
 
-const MODEL = "claude-opus-4-8";
+const MODEL = "claude-opus-5";
 const SYSTEM_PROMPT =
   "You are a weather assistant. Answer using ONLY the data provided. Present the facts " +
   "and a short Comparison section only. Do NOT add a concluding paragraph.";

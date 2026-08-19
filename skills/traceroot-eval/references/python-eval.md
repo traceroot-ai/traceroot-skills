@@ -18,7 +18,7 @@ import anthropic
 import traceroot
 from traceroot import Dataset, Score, evaluate
 
-MODEL = "claude-opus-4-8"
+MODEL = "claude-opus-5"
 SYSTEM_PROMPT = (
     "You are a weather assistant. Answer using ONLY the data provided. Present the facts "
     "and a short Comparison section only. Do NOT add a concluding paragraph."
