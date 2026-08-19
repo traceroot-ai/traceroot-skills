@@ -65,11 +65,12 @@ applies to a score whose `name` matches its scorer's declared `name` (see "How a
 owning scorer" below). A mismatch silently costs that metric its pass/fail verdict. **Keep the
 scorer's `name` equal to the `Score` name you emit** — the examples below do exactly that.
 
-**TypeScript footgun:** a metric named after "the function" is named after the function's *actual*
-JS name. An inline arrow assigned to a `const` inside `Scorer.code(opts, fn)` has no usable name and
-the metric comes out as the literal `"scorer"` — the `name` in the options object does **not**
-rename it. In TypeScript, return an explicit `Score` (or use a named `function` declaration) rather
-than relying on inference.
+**TypeScript naming falls back to the literal `"scorer"`.** Name resolution is declared `name`
+first, then the function's own `.name`, then `"scorer"`. A `const` gets its variable name
+automatically, so `const coverage = (ctx) => ...` is already named — but an arrow passed *inline* as
+an argument (`Scorer.code(opts, (ctx) => ...)`) has no name at all, so with no declared `name` its
+metric is emitted as `"scorer"`. Declare `name` in the options, assign the function to a `const`, or
+return an explicit `Score` — any one of the three is enough.
 
 ```python
 from traceroot import Score
@@ -151,13 +152,22 @@ Python uses `snake_case` option names, TypeScript `camelCase`. Both also accept 
 carries no trace, so a scorer cannot read `ctx.trace`. Declaring it documents an intent the runtime
 does not yet satisfy.
 
-**Where `passed` comes from:** each emitted `Score` gets its own `passed`, derived from the
-declared `threshold` (the pass boundary, inclusive) + `direction` of the scorer that produced it.
-A scorer with no declared threshold emits scores with no pass/fail verdict — that is fine and
-normal. There is never a case-level or run-level pass/fail.
+**Where `passed` comes from — it depends on the value's type:**
 
-This is also what puts `pass=k/n` on a metric's line in `summary()`. No threshold, no pass-rate —
-just a mean and a count. If someone asks "how many passed?", that question needs rung 2.
+| Score value | Verdict |
+|---|---|
+| `bool` | **the value itself** — `True` passes, `False` fails. No threshold involved. |
+| number | passes only if it clears the owning scorer's declared `threshold` (inclusive) in its `direction`. No threshold, or `direction="none"`, or a non-finite value → no verdict. |
+| string (categorical) | no verdict |
+
+So a plain rung-1 function returning `True`/`False` already produces a full pass/fail signal —
+`Scorer.code` adds nothing to it on that front. Climb to rung 2 for a verdict when the score is
+**numeric**, or when you want the declared policy and cross-language `key` for their own sake.
+
+This is also what puts `pass=k/n` on a metric's line in `summary()`: judgeable scores are counted,
+unjudgeable ones contribute only to the mean and count. If you expected a pass-rate and got just a
+mean, the scorer is returning a number with no threshold — return a bool, or declare one. There is
+never a case-level or run-level pass/fail.
 
 **How a score finds its owning scorer** (this is why the metric name matters): if the run has
 exactly one scorer and it emits exactly one score, that score is owned name-agnostically. In every

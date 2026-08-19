@@ -62,12 +62,14 @@ async function task(input: WeatherInput): Promise<string> {
 }
 
 // A scorer takes the ScorerContext. Returning a Score adds a metric name + a per-case comment.
-const coversBothCities = ({ input, output }: ScorerContext): Score => {
+// The value is a BOOLEAN, so it is its own pass/fail verdict — no threshold needed. The const is
+// named for the metric it emits, which keeps that verdict bound once you add a second scorer.
+const coverage = ({ input, output }: ScorerContext): Score => {
   const out = String(output ?? "").toLowerCase();
   const hit = (input as WeatherInput).cities.every((c) => out.includes(c.toLowerCase()));
   return {
     name: "coverage",
-    value: hit ? 1.0 : 0.0,
+    value: hit,
     comment: hit ? "all cities present" : "missing a city",
   };
 };
@@ -78,7 +80,7 @@ async function main() {
     name: "weather-no-conclusion",
     dataset: DATASET,
     task: (input) => task(input as WeatherInput),
-    scorers: [coversBothCities],
+    scorers: [coverage],
   });
 }
 

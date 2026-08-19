@@ -35,7 +35,7 @@ case is debuggable, not just a number.
   readable on the platform. Optional — but prefer it.
 - **Never invent a headline metric.** There is no `main_score` / `primary_metric` / run-level
   pass-rate. Results are metric-first: every scorer's metric and its mean. Pass/fail is
-  **per-score**, from the owning scorer's declared `threshold`.
+  **per-score** — a boolean score is its own verdict; a numeric one needs its scorer's `threshold`.
 - **Never hand-write a dataset push.** Pass a local `Dataset` to `evaluate()` and it provisions
   the dataset for you. No `ensure_synced()`, no manual `push()` step before the run.
 - **Don't invent cases.** Ask the user for real inputs, or derive them from real traces/fixtures
@@ -88,17 +88,19 @@ a run is never blocked waiting on `[y/N]`. Only an explicit `Dataset.push(...)` 
 See `references/datasets.md`.
 
 ### 5. Write scorers — climb the ladder only as far as you need
-1. **Plain function** — returns a bool or number. Enough when you want the metric recorded and
-   will read the mean yourself.
+1. **Plain function** — returns a bool or number. **A bool is already its own pass/fail verdict**,
+   so a yes/no check needs nothing more than this.
 2. **`Scorer.code(...)`** — adds declared policy (`value_type` / `direction` / `threshold`) and a
-   stable cross-language `key`. **A per-score `passed` verdict requires a declared `threshold`, so
-   any scorer you want pass/fail on belongs here** — in practice that is most of them.
+   stable cross-language `key`. Climb here when the score is **numeric** and you want a pass/fail
+   verdict on it — a number only becomes a verdict against a declared `threshold`.
 3. **`Scorer.llm_judge(...)` / `Scorer.llmJudge(...)`** — grading that needs a model. Static
    (declarative config only, no function body) or dynamic (a builder returning template variables
    per case).
 
-Rung 1 is the on-ramp, not a quota — climbing to rung 2 for a threshold is the normal case, and
-skipping it silently costs you the pass/fail signal.
+**The pass/fail rule, once:** a boolean score *is* its verdict. A numeric score passes only if it
+clears its scorer's declared `threshold` in the declared `direction`. No threshold on a numeric
+score means no verdict — a mean and a count, nothing more. So returning `True`/`False` from a plain
+function is a complete rung-1 scorer; returning `1.0`/`0.0` and expecting a pass-rate is the mistake.
 
 Full ladder with working code for both runtimes: `references/scorers.md`.
 
@@ -124,8 +126,10 @@ EvalRunResult(name='routing-v1', cases=2, errored=0, not_scored=2, task_errors=0
 
 - Every scorer you wrote appears as a metric line. A scorer that errored on every case reports no
   metric at all — that is a bug in the scorer, not a zero score.
-- `pass=k/n` appears **only** for a metric whose scorer declared a `threshold`. If you expected a
-  pass-rate and got none, the scorer is on rung 1 — give it a threshold via `Scorer.code`.
+- `pass=k/n` appears for any metric whose scores are **judgeable**: boolean values always are;
+  numeric values are only once their scorer declares a `threshold`. If you expected a pass-rate and
+  got only a mean, the scorer is returning a number with no threshold — return a bool instead, or
+  declare a threshold via `Scorer.code`.
 - The dashboard URL — share it as proof.
 - Check for `errored` cases you didn't expect. `not_scored` means no score was emitted, not a
   failure.
@@ -150,10 +154,6 @@ EvalRunResult(name='routing-v1', cases=2, errored=0, not_scored=2, task_errors=0
 | `local=True` while comparing candidates | Comparison across `candidate_version` lives on the dashboard; a local run reports nowhere, so there is nothing to compare. |
 
 ## References
-
-Exact signatures, argument names, and return shapes are re-verified in the canonical API reference
-(`17-08-2026/docs/eval-sdk-api-reference.md` in the TraceRoot workspace, generated from the
-`feat/offline-eval-epic` source). If a snippet here ever disagrees with it, that file wins.
 
 - `references/scorers.md` — the scorer ladder, `Score` objects, thresholds and per-score pass/fail
 - `references/datasets.md` — dataset identity, versions, the publish confirmation, pulling

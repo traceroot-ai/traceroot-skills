@@ -59,11 +59,13 @@ def task(input):
 
 
 # An ordinary function is a scorer. Returning a Score adds a metric name + a per-case comment.
-def covers_both_cities(input, output, expected=None):
+# The value is a BOOL, so it is its own pass/fail verdict — no threshold needed. The function is
+# named for the metric it emits, which is what keeps that verdict bound once you add a 2nd scorer.
+def coverage(input, output, expected=None):
     hit = all(c.lower() in (output or "").lower() for c in input["cities"])
     return Score(
         name="coverage",
-        value=1.0 if hit else 0.0,
+        value=hit,
         comment="all cities present" if hit else "missing a city",
     )
 
@@ -74,7 +76,7 @@ if __name__ == "__main__":
         name="weather-no-conclusion",
         dataset=DATASET,
         task=task,
-        scorers=[covers_both_cities],
+        scorers=[coverage],
     )
 ```
 
