@@ -197,13 +197,13 @@ it — already marked synced, so `evaluate()` will not re-publish it.
 recorded, then bring your own task and scorers:
 
 ```python
-replay = pull_dataset_version(run.dataset.dataset_version_id, dataset_id=dataset.dataset_id)
+replay = pull_dataset_version(run.dataset.dataset_version_id, dataset_id=run.dataset.dataset_id)
 evaluate(name="x-replay", dataset=replay, task=task, scorers=[s], local=True)
 ```
 
 ```ts
 const replay = await pullDatasetVersion(run.dataset.datasetVersionId, {
-  datasetId: dataset.datasetId,
+  datasetId: run.dataset.datasetId,
 });
 await evaluate({ name: "x-replay", dataset: replay, task, scorers: [s], local: true });
 ```

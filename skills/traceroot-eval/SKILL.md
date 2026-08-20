@@ -131,8 +131,9 @@ EvalRunResult(name='routing-v1', cases=2, errored=0, not_scored=2, task_errors=0
   got only a mean, the scorer is returning a number with no threshold — return a bool instead, or
   declare a threshold via `Scorer.code`.
 - The dashboard URL — share it as proof.
-- Check for `errored` cases you didn't expect. `not_scored` means no score was emitted, not a
-  failure.
+- Check for `errored` cases you didn't expect. **`not_scored` is not a failure and does not mean
+  "no score was emitted"** — status has two values, and `not_scored` is simply *not `errored`*, so
+  every clean case carries it. That is why the run above shows `not_scored=2` next to `pass=2/2`.
 - If nothing reported, re-check `TRACEROOT_API_KEY` — or run with `local=True` if a local result is
   all you need right now.
 
@@ -143,7 +144,7 @@ EvalRunResult(name='routing-v1', cases=2, errored=0, not_scored=2, task_errors=0
 | Picking a "primary" metric to report | Report every metric. There is no headline score. |
 | `main_score=` / `primary_metric=` | Removed. Not a parameter. |
 | Pushing the dataset before running | `evaluate(dataset=Dataset(...))` provisions it for you. |
-| Treating `not_scored` as a failure | It means no score was emitted, not a bad score. |
+| Treating `not_scored` as a failure | It just means *not errored* — every clean case is `not_scored`. |
 | A new `Dataset` name per run | Reuse the name; edits become new versions of one dataset. |
 | Wrapping every scorer in `Scorer.code` | A plain function is the default. Wrap only for policy. |
 | Two scorers reporting the same metric name | `evaluate()` rejects it before any case runs. Give each a distinct `name`/`key`. |

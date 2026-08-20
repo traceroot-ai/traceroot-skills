@@ -75,11 +75,11 @@ return an explicit `Score` — any one of the three is enough.
 ```python
 from traceroot import Score
 
-def covers_both_cities(input, output, expected=None):
+def coverage(input, output, expected=None):          # named for the metric it emits
     hit = all(c.lower() in (output or "").lower() for c in input["cities"])
     return Score(
         name="coverage",
-        value=1.0 if hit else 0.0,
+        value=hit,                                       # a bool is its own pass/fail verdict
         comment="all cities present" if hit else "missing a city",
     )
 ```
@@ -87,10 +87,10 @@ def covers_both_cities(input, output, expected=None):
 ```ts
 import type { Score } from "@traceroot-ai/traceroot";
 
-const coversBothCities = ({ input, output }: ScorerContext): Score => {
+const coverage = ({ input, output }: ScorerContext): Score => {   // named for the metric
   const hit = (input as WeatherInput).cities.every((c) =>
     String(output ?? "").toLowerCase().includes(c.toLowerCase()));
-  return { name: "coverage", value: hit ? 1.0 : 0.0,
+  return { name: "coverage", value: hit,               // a bool is its own pass/fail verdict
            comment: hit ? "all cities present" : "missing a city" };
 };
 ```

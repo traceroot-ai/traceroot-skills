@@ -169,7 +169,7 @@ result yourself:
 run.summary()                        # the same string it auto-prints
 run.results                          # list[EvalItemResult]
 run.errored                          # cases with a task or scorer error
-run.not_scored                       # cases that produced no score
+run.not_scored                       # cases that did NOT error (not: cases lacking a score)
 run.task_error_count                 # of those, the ones where the task itself raised
 run.scorer_error_count
 run.upload_state.dashboard_url       # link to the reported run
@@ -187,10 +187,16 @@ EvalRunResult(name='weather-no-conclusion', cases=2, errored=0, not_scored=2, ta
   coverage: mean=1 pass=2/2 count=2
 ```
 
-`pass=k/n` appears only for a metric whose scorer declared a `threshold`, and is resolved exactly
-as the platform resolves it — so the local pass-rate matches what the dashboard will show.
+`pass=k/n` appears for any metric whose scores are **judgeable**: boolean values always are;
+numeric values only once their scorer declares a `threshold`. It is resolved exactly as the platform
+resolves it, so the local pass-rate matches what the dashboard will show.
 
 Per-case status is `errored` or `not_scored` — there is no run-level pass/fail to read or compute.
+
+**`not_scored` does not mean "no score was emitted."** Per-case status has exactly two values, and
+`not_scored` is simply *not `errored`* — every case that ran cleanly carries it, scores and all.
+That is why the run above reports `not_scored=2` alongside `pass=2/2`. Read `errored` to find
+failures; read the metric lines to see what was scored.
 `aggregate_scores(...)` gives each metric's mean and count; numeric and boolean values contribute
 to the mean, categorical values to the count only.
 
