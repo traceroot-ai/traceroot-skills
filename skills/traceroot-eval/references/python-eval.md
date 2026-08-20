@@ -168,8 +168,9 @@ result yourself:
 ```python
 run.summary()                        # the same string it auto-prints
 run.results                          # list[EvalItemResult]
-run.errored                          # cases with a task or scorer error
-run.not_scored                       # cases that did NOT error (not: cases lacking a score)
+run.errored                          # int — COUNT of cases with a task or scorer error
+run.not_scored                       # int — COUNT of cases that did NOT error
+run.errors()                         # list[EvalItemResult] — the errored cases themselves
 run.task_error_count                 # of those, the ones where the task itself raised
 run.scorer_error_count
 run.upload_state.dashboard_url       # link to the reported run
@@ -195,8 +196,12 @@ Per-case status is `errored` or `not_scored` — there is no run-level pass/fail
 
 **`not_scored` does not mean "no score was emitted."** Per-case status has exactly two values, and
 `not_scored` is simply *not `errored`* — every case that ran cleanly carries it, scores and all.
-That is why the run above reports `not_scored=2` alongside `pass=2/2`. Read `errored` to find
-failures; read the metric lines to see what was scored.
+That is why the run above reports `not_scored=2` alongside `pass=2/2`. Call `run.errors()` to get
+the failed cases; read the metric lines to see what was scored.
+
+**`errored` and `not_scored` are counts, not collections** — they are `int` properties, so
+`for item in run.errored:` raises `TypeError: 'int' object is not iterable`. Iterate `run.errors()`
+for the errored items, or `run.results` for every item.
 `aggregate_scores(...)` gives each metric's mean and count; numeric and boolean values contribute
 to the mean, categorical values to the count only.
 

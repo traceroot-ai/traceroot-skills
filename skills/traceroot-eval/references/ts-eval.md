@@ -96,12 +96,12 @@ One options object. `name`, `task`, `scorers`, and `dataset` are what you need f
 | Option | Meaning |
 |---|---|
 | `name` | the evaluation's name (required) |
-| `dataset` | a `Dataset` or an array of cases (`data` is a back-compat alias) |
+| `dataset` | a `Dataset`, a `DatasetSnapshot`, or an array of cases (required; `data` is an alias) |
 | `task` | `(input) => output \| Promise<output>` (required) |
 | `scorers` | array of scorer functions (required) |
 | `local` | `true` runs in full and reports **nowhere**; mutually exclusive with `transport` |
 | `evaluationKey` | stable grouping identity; defaults to `name` |
-| `maxConcurrency` | cases in flight |
+| `maxConcurrency` | cases in flight, default `10` |
 | `timeout` | per-case bound in seconds, bounding the task *and* its scorers |
 | `select` | `(c: EvalCase) => boolean` to run a subset |
 | `metadata` | free-form record attached to the run record |
@@ -147,8 +147,9 @@ result yourself:
 ```ts
 run.summary();                      // the same string it auto-logs
 run.results;                        // EvalItemResult[]
-run.errored;                        // cases with a task or scorer error
-run.notScored;                      // cases that did NOT error (not: cases lacking a score)
+run.errored;                        // number — COUNT of cases with a task or scorer error
+run.notScored;                      // number — COUNT of cases that did NOT error
+run.errors();                       // EvalItemResult[] — the errored cases themselves
 run.uploadState.dashboardUrl;       // link to the reported run
 run.uploadState.failedResultCount;  // per-case POSTs dropped; >0 means silently-missing results
 run.candidateVersion;
@@ -172,8 +173,12 @@ compute.
 
 **`not_scored` does not mean "no score was emitted."** Per-case status has exactly two values, and
 `not_scored` is simply *not `errored`* — every case that ran cleanly carries it, scores and all.
-That is why the run above reports `not_scored=2` alongside `pass=2/2`. Read `errored` to find
-failures; read the metric lines to see what was scored. `aggregateScores(...)` gives each metric's mean and count; numeric and boolean values
+That is why the run above reports `not_scored=2` alongside `pass=2/2`. Call `run.errors()` to get
+the failed cases; read the metric lines to see what was scored.
+
+**`errored` and `notScored` are counts, not collections** — they are `number` getters, so
+`run.errored.map(...)` throws. Use `run.errors()` for the errored items, or `run.results` for every
+item. `aggregateScores(...)` gives each metric's mean and count; numeric and boolean values
 contribute to the mean, categorical values to the count only.
 
 A scorer that throws fails that scorer on that case and marks the case `errored`; the run itself

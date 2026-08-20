@@ -7,7 +7,8 @@ A scorer grades one case. Climb only as far as the job needs — most scorers st
 No wrapper, no import. The metric name defaults to the function name.
 
 **Python** — a plain scorer declares the fields it consumes by name, from
-`(input, output, expected, metadata)`; anything it doesn't need it simply doesn't declare:
+`(input, output, expected, metadata)`. **It must declare `input` or `output`** — that is the signal
+the engine uses to pick this calling convention. Given that, the other two are optional:
 
 ```python
 def covers_both_cities(input, output, expected=None):
@@ -15,8 +16,20 @@ def covers_both_cities(input, output, expected=None):
     return all(c.lower() in out for c in input["cities"])
 ```
 
-A Python scorer may instead take a single `ctx` argument (`ScorerContext`) — both forms work. A
-plain scorer may only take those four names; any other required parameter raises a `TypeError`.
+A Python scorer may instead take a single `ctx` argument (`ScorerContext`) — both forms work, and
+the engine picks between them by looking for a parameter literally named `input` or `output`.
+
+**The trap: a scorer that declares neither is treated as the `ctx` form.** `def matches(expected)`
+looks like a plain scorer but has no `input`/`output`, so it is called as `matches(ctx)` — the whole
+`ScorerContext` binds to `expected` and the scorer compares against a dataclass. No `TypeError`; you
+just get a wrong score. Always include `input` or `output`, even if only to ignore it:
+
+```python
+def matches(input, output, expected=None):        # `input` present → plain form
+    return output == expected
+```
+
+With `input`/`output` present, any *other* required parameter does raise a `TypeError` up front.
 
 **TypeScript** — a scorer always takes the `ScorerContext`, idiomatically destructured:
 
@@ -30,6 +43,13 @@ const coversBothCities = ({ input, output }: ScorerContext): boolean => {
 ```
 
 `ScorerContext` has exactly four fields: `input`, `output`, `expected`, `metadata`.
+
+The TypeScript snippets below narrow `ctx.input` to a `WeatherInput` — the shape this file's running
+example uses. It is the task's own input type, declared alongside your dataset, not an SDK export:
+
+```ts
+interface WeatherInput { query: string; cities: string[] }
+```
 
 Scorers may be sync or async in both runtimes.
 
@@ -85,7 +105,7 @@ def coverage(input, output, expected=None):          # named for the metric it e
 ```
 
 ```ts
-import type { Score } from "@traceroot-ai/traceroot";
+import type { Score, ScorerContext } from "@traceroot-ai/traceroot";
 
 const coverage = ({ input, output }: ScorerContext): Score => {   // named for the metric
   const hit = (input as WeatherInput).cities.every((c) =>
