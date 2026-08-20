@@ -197,6 +197,13 @@ scorer's declared `name` silently loses its pass/fail verdict. Either keep the n
 the scorer's `name` to the metric you actually emit. The local `summary()` resolves ownership the
 same way the platform does, so what you see locally is what the dashboard shows.
 
+**The duplicate-name guard only covers *scorer* names.** `evaluate()` refuses to start when two
+scorers resolve to the same scorer name, before any case runs. It does **not** inspect the
+`Score.name` values they emit — so two differently-named scorers that both return
+`Score(name="coverage")` run fine and collide at report time, where the ambiguous policy drops that
+metric to non-directional (no pass/fail). Keeping each scorer's `name` equal to the metric it emits
+makes the guard cover both cases at once.
+
 ## Rung 3 — `Scorer.llm_judge`: grading with a model
 
 The judge's `model` + `messages` are its reported definition, and its version is a deterministic
