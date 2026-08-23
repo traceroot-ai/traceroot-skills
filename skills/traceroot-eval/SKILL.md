@@ -147,7 +147,7 @@ EvalRunResult(name='routing-v1', cases=2, errored=0, not_scored=2, task_errors=0
 | Treating `not_scored` as a failure | It just means *not errored* — every clean case is `not_scored`. |
 | A new `Dataset` name per run | Reuse the name; edits become new versions of one dataset. |
 | Wrapping every scorer in `Scorer.code` | A plain function is the default. Wrap only for policy. |
-| Two scorers sharing a **scorer** name | `evaluate()` rejects it before any case runs. Give each a distinct `name`/`key`. |
+| Two scorers sharing a **scorer** name | `evaluate()` rejects it before any case runs. Give each a distinct `name` — a distinct `key` does not clear it. |
 | Two scorers emitting the same `Score.name` | **Not** caught — the metric silently goes non-directional. Keep emitted names distinct yourself. |
 | `run_scorers` / `runScorers` | Removed. Aggregate across cases yourself from the returned result. |
 | Renaming an eval and losing its history | Keep `evaluation_key` / `evaluationKey` stable; `name` is only the display label. |

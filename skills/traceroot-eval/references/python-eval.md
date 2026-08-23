@@ -87,7 +87,7 @@ Keyword-only. `name`, `dataset`, `task`, `scorers` are what you need for a first
 | Parameter | Meaning |
 |---|---|
 | `name` | the evaluation's display name (required) |
-| `dataset` | a `Dataset`, a `DatasetSnapshot`, or a list of cases (required; `data=` is an alias) |
+| `dataset` | a `Dataset`, a `DatasetSnapshot`, or a list of cases (required) |
 | `task` | `callable(input) -> output` (required) |
 | `scorers` | sequence of scorer callables (required) |
 | `local` | `True` runs in full and reports **nowhere**; mutually exclusive with a transport |

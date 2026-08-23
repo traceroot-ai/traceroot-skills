@@ -2,9 +2,11 @@
 
 ## The mental model
 
-**A dataset's identity is its NAME.** `Dataset("weather-no-conclusion")` always refers to the same
-dataset — in any process, on any machine, from Python or TypeScript. Re-running does not fork a new
-dataset; it resolves to the same one.
+**A dataset's identity is its `key`, which defaults to its name.**
+`Dataset("weather-no-conclusion")` always refers to the same dataset — in any process, on any
+machine, from Python or TypeScript. Re-running does not fork a new dataset; it resolves to the same
+one. Pass `key=` explicitly on any dataset you may rename later, so the display name can change
+without forking its history.
 
 **Versions are content-addressed.** The cases you author produce a content revision. Unchanged
 content re-resolves to the current version (a no-op). Changed content publishes a **new version of
