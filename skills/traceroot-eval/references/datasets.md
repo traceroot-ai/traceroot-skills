@@ -2,11 +2,9 @@
 
 ## The mental model
 
-**A dataset's identity is its `key`, which defaults to its name.**
-`Dataset("weather-no-conclusion")` always refers to the same dataset — in any process, on any
-machine, from Python or TypeScript. Re-running does not fork a new dataset; it resolves to the same
-one. Pass `key=` explicitly on any dataset you may rename later, so the display name can change
-without forking its history.
+**A dataset's identity is its NAME.** `Dataset("weather-no-conclusion")` always refers to the same
+dataset — in any process, on any machine, from Python or TypeScript. Re-running does not fork a new
+dataset; it resolves to the same one. Reuse the name; renaming starts a new dataset.
 
 **Versions are content-addressed.** The cases you author produce a content revision. Unchanged
 content re-resolves to the current version (a no-op). Changed content publishes a **new version of
@@ -62,8 +60,7 @@ content** — not its position. Consequences worth knowing:
 - Re-publishing matches cases by id, so the platform pairs runs case-for-case.
 
 Ids are `ds_` + a sha256 prefix of the key for the dataset, and `tc_` + a sha256 prefix of
-(dataset key + canonical input + occurrence) for each case. Identity is the **key**, which defaults
-to the name — set `key` explicitly if you want to rename the dataset without forking it.
+(dataset key + canonical input + occurrence) for each case. The key defaults to the name.
 
 Reading identity back:
 
