@@ -7,6 +7,9 @@
     "type": "git",
     "url": "git+https://github.com/traceroot-ai/traceroot-skills.git"
   },
+  "scripts": {
+    "check:manifest": "node scripts/check-manifest.mjs"
+  },
   "files": [
     "skills",
     "LICENSE",
