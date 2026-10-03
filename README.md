@@ -30,3 +30,20 @@ export TRACEROOT_HOST_URL=https://app.traceroot.ai  # only when self-hosting
 ```
 
 Find your API key in the TraceRoot UI under project settings.
+
+## Manifest
+
+`skills/manifest.json` is the index of the skills in this repository. Each entry names the skill's
+directory under `skills/`, a one-line description, short "best for" tags, and whether the TraceRoot
+CLI bundles it:
+
+```json
+{
+  "name": "traceroot-quickstart",
+  "description": "Minimal runnable demo that produces one TraceRoot trace.",
+  "bestFor": ["verifying API keys", "seeing TraceRoot quickly"],
+  "bundledWithCli": true
+}
+```
+
+This repository is also published as [`@traceroot-ai/skills`](https://www.npmjs.com/package/@traceroot-ai/skills) — skill content only, no build and no runtime dependencies. The [TraceRoot CLI](https://github.com/traceroot-ai/traceroot-cli) depends on that package and vendors every skill whose `bundledWithCli` is `true` at build time, so this repository is the single source for the skills it ships.
