@@ -30,6 +30,10 @@ LangChain/LangGraph, and more). The installed SDK is the current list — read i
 a docs page, which costs a network round trip to learn something the package already knows.
 Coverage changes over time, so don't assume a library is unsupported without looking.
 
+Until the SDK is installed there is nothing to introspect, so work from the published list at
+https://traceroot.ai/docs/integrations/overview for the analyze step only — once it is
+installed, the enum below is authoritative.
+
 Pass only the `Integration.*` members for libraries the project actually uses. The enum names
 aren't always the obvious ones (e.g. Gemini is `Integration.GOOGLE_GENAI`), so rather than
 guessing, list the exact members available in the installed SDK:
