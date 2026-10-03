@@ -1,0 +1,77 @@
+name: Publish npm Package
+
+on:
+  release:
+    types: [published]
+  # Re-run a release's publish after a workflow fix without deleting and
+  # recreating the release (which would re-announce it). Runs against the tag.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to publish, e.g. v0.1.0"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: npm
+      url: https://www.npmjs.com/package/@traceroot-ai/skills
+    permissions:
+      id-token: write # npm provenance
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # On the release event this is the tag already; on dispatch, publish
+          # the tag the input names, never main.
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing authenticates over OIDC and needs npm >= 11.5.1.
+      # Node 20 ships npm 10, so upgrade before publishing. Pinned to the 11
+      # line: npm 12 dropped Node 20 (requires ^22.22.2).
+      - name: Update npm
+        run: npm install -g npm@11
+
+      # This package is data only — no dependencies to install, nothing to
+      # build, and no tests. The skills ship exactly as they sit in the repo.
+      - name: Verify tag matches package.json version
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          TAG="${{ github.event.release.tag_name || inputs.tag }}"
+          TAG_VERSION="${TAG#v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Release tag ($TAG_VERSION) does not match package.json version ($PKG_VERSION)"
+            exit 1
+          fi
+
+      - name: Verify every skill directory has a manifest entry
+        run: |
+          node -e '
+            const fs = require("fs");
+            const { skills } = JSON.parse(fs.readFileSync("skills/manifest.json", "utf8"));
+            const names = skills.map((s) => s.name).sort();
+            const dirs = fs
+              .readdirSync("skills", { withFileTypes: true })
+              .filter((e) => e.isDirectory())
+              .map((e) => e.name)
+              .sort();
+            if (JSON.stringify(names) !== JSON.stringify(dirs)) {
+              console.error(`::error::manifest [${names}] does not match directories [${dirs}]`);
+              process.exit(1);
+            }
+          '
+
+      # No token: npm verifies the OIDC claim that this run came from this
+      # repo and workflow. Configure the trusted publisher on npmjs.com first,
+      # or this step fails with an auth error.
+      - name: Publish package
+        run: npm publish --provenance --access public
