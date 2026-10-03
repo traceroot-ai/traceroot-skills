@@ -53,22 +53,11 @@ jobs:
             exit 1
           fi
 
-      - name: Verify every skill directory has a manifest entry
-        run: |
-          node -e '
-            const fs = require("fs");
-            const { skills } = JSON.parse(fs.readFileSync("skills/manifest.json", "utf8"));
-            const names = skills.map((s) => s.name).sort();
-            const dirs = fs
-              .readdirSync("skills", { withFileTypes: true })
-              .filter((e) => e.isDirectory())
-              .map((e) => e.name)
-              .sort();
-            if (JSON.stringify(names) !== JSON.stringify(dirs)) {
-              console.error(`::error::manifest [${names}] does not match directories [${dirs}]`);
-              process.exit(1);
-            }
-          '
+      # Same check CI runs on every pull request, from the same script — the
+      # manifest is the published index, so it must not ship disagreeing with
+      # the directories beside it.
+      - name: Manifest matches the skill directories
+        run: npm run check:manifest
 
       # No token: npm verifies the OIDC claim that this run came from this
       # repo and workflow. Configure the trusted publisher on npmjs.com first,

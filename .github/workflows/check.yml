@@ -1,0 +1,25 @@
+name: Manifest Check
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # No `npm ci` and no npm cache: this package is data only, so it has no
+      # dependencies and no lockfile. The check is plain Node against the
+      # files in the tree.
+      - name: Manifest matches the skill directories
+        run: npm run check:manifest
