@@ -73,9 +73,10 @@ read those rather than guessing a flag name.
 
 - **`--json` is global.** Always pass it; parse the payload instead of scraping the table.
 - **Exit codes are stable** — `2` usage, `3` auth, `4` not found, `5` network, `1` internal — and
-  under `--json` a failure also prints `{"error":{"code","message"}}` carrying the matching string
-  code. Branch on the code, never on the message: `3` means re-auth or pass `--project`, `5` is
-  retryable, `4` is final.
+  under `--json` a failure also prints a parseable envelope on stderr carrying the matching string
+  code, one of `usage`, `auth`, `not_found`, `network`, `internal`:
+  `{"error":{"code":"auth","message":"..."}}`. Branch on the code, never on the message: `3` means
+  re-auth or pass `--project`, `5` is retryable, `4` is final.
 
 ## Guardrails
 
