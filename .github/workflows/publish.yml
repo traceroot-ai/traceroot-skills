@@ -21,6 +21,10 @@ jobs:
       name: npm
       url: https://www.npmjs.com/package/@traceroot-ai/skills
     permissions:
+      # A job-level block replaces the workflow-level one rather than adding to
+      # it, so `contents: read` has to be repeated here or `checkout` cannot
+      # fetch the tag.
+      contents: read
       id-token: write # npm provenance
     steps:
       - uses: actions/checkout@v4
@@ -43,10 +47,15 @@ jobs:
 
       # This package is data only — no dependencies to install, nothing to
       # build, and no tests. The skills ship exactly as they sit in the repo.
+      #
+      # TAG arrives through `env`, not expanded into the script: a tag name may
+      # legally hold quotes, `;` and `$`, and an expansion here would run them
+      # as shell source.
       - name: Verify tag matches package.json version
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
         run: |
           PKG_VERSION=$(node -p "require('./package.json').version")
-          TAG="${{ github.event.release.tag_name || inputs.tag }}"
           TAG_VERSION="${TAG#v}"
           if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
             echo "::error::Release tag ($TAG_VERSION) does not match package.json version ($PKG_VERSION)"

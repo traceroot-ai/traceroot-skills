@@ -38,6 +38,40 @@ if (unnamed.length > 0) {
   process.exit(1);
 }
 
+// `name` alone is not enough to be a usable index entry. The CLI reads
+// `description` and `bestFor` as the prose for `skills list`, and selects what
+// it vendors on `bundledWithCli` — so an entry missing one of those publishes
+// an index that reads `undefined`, or quietly drops a skill from the bundle
+// because a missing flag is falsy. Check the shape of each, not just its
+// presence.
+const malformed = [];
+for (const skill of manifest.skills) {
+  const problems = [];
+  if (typeof skill.description !== "string" || skill.description.trim().length === 0) {
+    problems.push("`description` must be a non-empty string");
+  }
+  if (
+    !Array.isArray(skill.bestFor) ||
+    skill.bestFor.length === 0 ||
+    !skill.bestFor.every((tag) => typeof tag === "string" && tag.trim().length > 0)
+  ) {
+    problems.push("`bestFor` must be a non-empty array of non-empty strings");
+  }
+  if (typeof skill.bundledWithCli !== "boolean") {
+    problems.push("`bundledWithCli` must be true or false");
+  }
+  if (problems.length > 0) {
+    malformed.push(`${skill.name}: ${problems.join("; ")}`);
+  }
+}
+
+if (malformed.length > 0) {
+  process.stderr.write(
+    `error: skills/manifest.json has malformed entr${malformed.length === 1 ? "y" : "ies"} — ${malformed.join(" / ")}.\n`,
+  );
+  process.exit(1);
+}
+
 const directories = readdirSync(skillsDir, { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
   .map((entry) => entry.name);

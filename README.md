@@ -46,4 +46,8 @@ CLI bundles it:
 }
 ```
 
+All four fields are required. `npm run check:manifest` enforces that, and that every entry names a
+directory under `skills/` and every such directory has exactly one entry; CI runs it on every pull
+request and the publish workflow runs it again before packing.
+
 This repository is also published as [`@traceroot-ai/skills`](https://www.npmjs.com/package/@traceroot-ai/skills) — skill content only, no build and no runtime dependencies. The [TraceRoot CLI](https://github.com/traceroot-ai/traceroot-cli) depends on that package and vendors every skill whose `bundledWithCli` is `true` at build time, so this repository is the single source for the skills it ships.
