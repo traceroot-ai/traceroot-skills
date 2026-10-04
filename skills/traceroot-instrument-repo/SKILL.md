@@ -38,7 +38,10 @@ invoking this, and re-deriving those costs a round trip to reach the same answer
 ## Workflow
 
 ### 1. API key (non-blocking — skip if you were told it is set)
-TraceRoot reads `TRACEROOT_API_KEY` from the environment (or `.env`). Do not grep or print it to
+TraceRoot reads `TRACEROOT_API_KEY` from the process environment. The SDK does not load `.env`
+itself, so a key kept there only reaches it if the file is loaded before the SDK import — the
+language reference's snippet already does this (`load_dotenv()` in Python, `import 'dotenv/config'`
+in Node). Do not grep or print the key to
 confirm; if the SDK reports at runtime that it is missing, say so then. If it is **not** set, do not stop: still add the instrumentation (it reads the key from the environment at runtime), and tell the user they must set `TRACEROOT_API_KEY` — found in the TraceRoot UI under project settings — before running the verification step. Never hardcode or print the key. Only stop early if you cannot determine which service/runtime to instrument (see step 3).
 
 ### 2. Analyze (read-only — do not edit yet)
