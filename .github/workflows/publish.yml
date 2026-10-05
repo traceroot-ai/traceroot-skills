@@ -69,7 +69,13 @@ jobs:
         run: npm run check:manifest
 
       # No token: npm verifies the OIDC claim that this run came from this
-      # repo and workflow. Configure the trusted publisher on npmjs.com first,
-      # or this step fails with an auth error.
+      # repo and workflow, which needs a trusted publisher configured on
+      # npmjs.com — and that can only be set on a package that already
+      # exists. So the first version cannot be published from here. Publish
+      # it by hand once (`npm publish --access public`, without
+      # `--provenance`, which only works in CI), then configure the trusted
+      # publisher; every release after that runs through this workflow.
+      # `@traceroot-ai/tools` went the same way — its 0.1.0 carries no
+      # provenance attestation and 0.2.0 onward do.
       - name: Publish package
         run: npm publish --provenance --access public
