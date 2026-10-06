@@ -1,7 +1,7 @@
 {
   "name": "@traceroot-ai/skills",
-  "version": "0.1.0",
-  "description": "TraceRoot skills for coding agents — add tracing, run a quickstart, or write offline evaluations.",
+  "private": true,
+  "description": "TraceRoot skills for coding agents.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -9,13 +9,5 @@
   },
   "scripts": {
     "check:manifest": "node scripts/check-manifest.mjs"
-  },
-  "files": [
-    "skills",
-    "LICENSE",
-    "README.md"
-  ],
-  "publishConfig": {
-    "access": "public"
   }
 }
