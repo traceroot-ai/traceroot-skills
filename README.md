@@ -48,6 +48,18 @@ CLI bundles it:
 
 All four fields are required. `npm run check:manifest` enforces that, and that every entry names a
 directory under `skills/` and every such directory has exactly one entry; CI runs it on every pull
-request and the publish workflow runs it again before packing.
+request.
 
-This repository is also published as [`@traceroot-ai/skills`](https://www.npmjs.com/package/@traceroot-ai/skills) — skill content only, no build and no runtime dependencies. The [TraceRoot CLI](https://github.com/traceroot-ai/traceroot-cli) depends on that package and vendors every skill whose `bundledWithCli` is `true` at build time, so this repository is the single source for the skills it ships.
+## How consumers get the text
+
+This repository is not an installable package — `package.json` is private and exists only to host
+the check above. What it is instead is the single source for every skill's text: a consumer takes a
+copy pinned to a commit here rather than resolving a version range.
+
+The [TraceRoot CLI](https://github.com/traceroot-ai/traceroot-cli) does exactly that. It vendors
+every skill whose `bundledWithCli` is `true`, recording the commit it copied from and a SHA-256
+per file, and its own CI re-hashes the copy on every pull request — so a hand-edit to the vendored
+tree fails there instead of shipping. Moving to newer skill text is a deliberate change to that
+recorded commit.
+
+So edit skills here. A copy that disagrees with this repository is a bug in the copy.
