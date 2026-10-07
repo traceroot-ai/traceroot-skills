@@ -42,6 +42,7 @@ Confirm `TRACEROOT_API_KEY` is set (environment or `.env`). If not, ask the user
 - Detect the runtime (Python or TypeScript/Node.js). Read the dependency manifest (`pyproject.toml`/`requirements.txt` or `package.json`) and scan imports to see what is actually used.
 - Identify the LLM providers/frameworks in use (OpenAI, Anthropic, LangChain/LangGraph, and others). Coverage differs by runtime and changes over time — the canonical list is https://traceroot.ai/docs/integrations/overview. Match each library you find to its integration in the language reference; don't assume a library is unsupported without checking the docs.
 - Check for **existing tracing/OpenTelemetry** (a `TracerProvider`, `opentelemetry` imports, another vendor's SDK) to avoid double-instrumentation.
+- Check whether the **TraceRoot CLI** is available: is `traceroot` on `PATH` and authenticated (`traceroot status` succeeds)? Note the answer — step 6 uses it to verify the trace itself instead of handing off to the user.
 - Infer what user/session context is available:
 
   | If the code has… | Infer | Attach |
@@ -62,11 +63,21 @@ Install the SDK and initialize **once, at the entry point, before any LLM librar
 Wrap agent entrypoints, tool functions, and key orchestration steps (`@observe` / `observe()`), attaching the user/session context inferred in step 2. Prefer auto-instrumentation; add manual spans only where they add signal (see "What to instrument" in the reference).
 
 ### 6. Verify (required — do not stop early)
-Run a representative flow, then confirm the trace landed:
-- If the SDK prints a trace URL, share it as proof.
-- Otherwise log the trace id (`get_current_trace_id()` / `getCurrentTraceId()`) and point the user to the TraceRoot UI → Traces to confirm the span tree appears (entrypoint + child/tool spans with input/output).
-- A good trace has: a descriptive name, model + token usage on LLM spans, proper nesting, and no PII/secrets in inputs.
-- If nothing appears → `references/troubleshooting.md`.
+Run a representative flow and log the trace id (`get_current_trace_id()` / `getCurrentTraceId()`) — always report it, whichever path below you take.
+
+A good trace has: a descriptive name, model + token usage on LLM spans, proper nesting, and no PII/secrets in inputs.
+
+**If the CLI is available** (from step 2), check the trace yourself — don't hand this to the user:
+
+```bash
+traceroot traces get <trace-id> --fields full
+```
+
+`--fields full` is required to see span input/output; the default projection omits it, so without the flag you cannot check the PII criterion. Read the span tree against the four points above, fix what's wrong, and re-run until it passes. Do not report success on a trace you have not read.
+
+**If the CLI is not available,** point the user to the TraceRoot UI → Traces to confirm the span tree appears (entrypoint + child/tool spans with input/output), and mention that `npm install -g traceroot-cli` makes this checkable from the terminal.
+
+If nothing appears → `references/troubleshooting.md`.
 
 ## References
 - `references/python-instrument.md` — Python SDK patterns: `initialize`, `@observe`, `using_attributes`, context updates
