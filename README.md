@@ -1,6 +1,6 @@
 # TraceRoot Skills
 
-Skills for adding [TraceRoot](https://traceroot.ai) tracing to your application, for Python and TypeScript/Node.js.
+Skills for adding [TraceRoot](https://traceroot.ai) tracing and running offline evals with your coding agent, for Python and TypeScript/Node.js.
 
 ## Which skill?
 
