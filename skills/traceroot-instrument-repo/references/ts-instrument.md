@@ -75,6 +75,62 @@ const answer = await observe(
 | `metadata` | `object` | — | Static metadata to attach |
 | `tags` | `string[]` | — | Tags for filtering |
 
+## Streaming and long-lived spans
+
+`observe()` ends the span when your function returns. That is correct for a request/response function and wrong for anything that returns a handle to work still in progress — a stream, a queued job, a subscription. For those, either declare the function `async function*` so `observe()` tracks the iteration, or create the span imperatively and end it yourself.
+
+**Async generator** — the span stays open across the whole iteration, and every yielded value is collected as output:
+
+```typescript
+import { observe } from '@traceroot-ai/traceroot';
+
+const gen = observe({ name: 'chat.stream', type: 'llm' }, async function* (prompt: string) {
+  for await (const chunk of model.stream(prompt)) {
+    yield chunk;
+  }
+});
+
+for await (const chunk of gen) {
+  // ...
+}
+```
+
+**Imperative** — for a streaming route handler that returns the stream and ends the span when the stream completes:
+
+```typescript
+import { startSpan, usingSpan } from '@traceroot-ai/traceroot';
+
+const span = startSpan({ name: 'chat.stream', type: 'llm', input: { prompt } });
+try {
+  // children created inside nest under `span`
+  const stream = await usingSpan(span, () => callModel(prompt));
+
+  onFinish(stream, ({ text, usage }) => {          // your framework's completion callback
+    span.update({ output: text, usage: { input: usage.in, output: usage.out } });
+    span.end();                                    // ends when the stream ends
+  });
+
+  return stream;
+} catch (err) {
+  span.setError(err);
+  span.end();
+  throw err;
+}
+```
+
+An imperatively created span is only ended by you — an early return or a rejected promise that skips `end()` leaks it, which is why the `try/catch` above is part of the pattern rather than decoration.
+
+### Imperative span API
+
+| Function | Description |
+|----------|-------------|
+| `startSpan(options)` | Create a span and return a `Span` handle. `StartSpanOptions` takes `name`, `type`, `input`, `model`, `modelParameters`, `tags`, `sessionId`, `userId`, `attributes`, and `parent` |
+| `usingSpan(span, fn)` | Run `fn` with `span` active so nested `observe()`/`startSpan()` calls parent under it |
+| `getCurrentSpan()` | The currently active `Span` handle, if any |
+| `getCurrentSpanId()` | The id of the currently active span, if any |
+
+`Span` handle methods: `update(attrs)` (`name`, `input`, `output`, `metadata`, `model`, `modelParameters`, `usage`, `attributes`), `setError(err)`, `end()`, and `startSpan(options)` for nested children.
+
 ## Set user and session context
 
 Use `usingAttributes()` — all spans created inside the callback inherit the values, including those from auto-instrumented LLM calls.
