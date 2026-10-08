@@ -81,10 +81,17 @@ read those rather than guessing a flag name.
 ## Guardrails
 
 - **This is not a read-only CLI.** Eighteen commands are `create`, `update` or `delete`, and
-  `alerts status` writes too; none of them prompts for confirmation. `allowed-tools` above is the
-  enforcement and carries reads only — don't look for a way around it. When the user wants
-  something created, changed or deleted, name the command and let them run it.
-- `traceroot traces export` is deliberately not allowlisted: it writes a directory, and `--force`
-  clears a non-empty one.
+  `alerts status` writes too; none of them prompts for confirmation. `allowed-tools` above lists
+  reads only, but understand what that list is: it **pre-approves** those commands so they run
+  without a prompt, and it restricts nothing. Every other command stays callable, governed by the
+  user's own permission settings, and the grant expires at their next message. So the list is the
+  boundary you hold yourself to, not one the harness holds for you. When the user wants something
+  created, changed or deleted, name the command and let them run it.
+- **Write no files.** Two commands can, and being allowlisted does not make them safe to use that
+  way. `traceroot sql --output <path>` writes the result to that path and overwrites whatever is
+  there, with no prompt and no `--force`; `traceroot sql --file <path>` reads a query from any
+  readable file and sends its contents to the API. Use neither — print the result and let the user
+  redirect it. `traceroot traces export` is left out of the list for the same reason: it writes a
+  directory, and `--force` clears a non-empty one.
 - Verifying a trace you have just instrumented belongs to `traceroot-instrument-repo` and
   `traceroot-quickstart`. Don't repeat it here.
