@@ -33,6 +33,17 @@
         "catching regressions"
       ],
       "bundledWithCli": false
+    },
+    {
+      "name": "traceroot-cli",
+      "description": "Read traces, evaluation runs and detector findings from the terminal with the TraceRoot CLI.",
+      "bestFor": [
+        "reading a trace",
+        "evaluation regressions",
+        "detector findings",
+        "SQL over spans"
+      ],
+      "bundledWithCli": true
     }
   ]
 }
