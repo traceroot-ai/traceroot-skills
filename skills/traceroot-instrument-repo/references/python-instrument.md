@@ -23,6 +23,16 @@ traceroot.initialize(
 
 `TRACEROOT_API_KEY` is read from the environment automatically. No need to pass it explicitly.
 
+### Default integration behavior
+
+Python does not enable integrations when `integrations` is omitted (its default is `None`). Pass an explicit list to instrument providers; use `integrations=[]` when you want manual spans only.
+
+| Setting | Behavior |
+|---|---|
+| Omitted / `None` | No integrations are initialized |
+| `[]` | No integrations are initialized |
+| Explicit list | Initializes only the listed integrations |
+
 ### Supported integrations
 
 TraceRoot auto-instruments many model providers and agent frameworks (OpenAI, Anthropic,

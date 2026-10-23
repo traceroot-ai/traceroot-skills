@@ -23,6 +23,16 @@ TraceRoot.initialize({
 
 `TRACEROOT_API_KEY` is read from the environment automatically. No need to pass it explicitly.
 
+### Default integration behavior
+
+Omitting `instrumentModules` enables automatic patching for supported CommonJS modules found in the process. Pass an explicit object to limit patching to selected modules, or `{}` for manual spans only. The automatic patching path covers supported CommonJS modules; it does not cover ESM imports. In ESM applications, pass explicit module references to `instrumentModules`.
+
+| Setting | Behavior |
+|---|---|
+| Omitted / `undefined` | Auto-patches all supported CommonJS modules found |
+| `{}` | No modules are patched |
+| Explicit object | Patches the provided module references |
+
 Other supported `instrumentModules` keys: `claudeAgentSDK`, `bedrock`, `openaiAgents` (pass the imported module, same as above). Pass only the ones the project uses. For the Vercel AI SDK, no entry is needed — set `experimental_telemetry: { isEnabled: true }` on each call and TraceRoot enriches those spans automatically. For Mastra, use `@traceroot-ai/mastra`'s `TraceRootExporter` instead of `instrumentModules`.
 
 The TS runtime supports fewer frameworks than Python (many agent frameworks are Python-only). The canonical, current list per runtime is https://traceroot.ai/docs/integrations/overview — treat the docs page as the source of truth, since coverage changes over time.
