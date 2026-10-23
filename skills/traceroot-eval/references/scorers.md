@@ -218,7 +218,7 @@ from traceroot import Scorer
 no_conclusion = Scorer.llm_judge(
     key="no_conclusion",
     name="no_conclusion",
-    model="claude-opus-5",
+    model="claude-opus-5-5",
     messages=[
         {"role": "system", "content": (
             "Grade whether an ANSWER ends with a concluding or summary paragraph. Reply with a "
@@ -234,7 +234,7 @@ no_conclusion = Scorer.llm_judge(
 const noConclusion = Scorer.llmJudge({
   key: "no_conclusion",
   name: "no_conclusion",
-  model: "claude-opus-5",
+  model: "claude-opus-5-5",
   messages: [
     { role: "system", content:
         "Grade whether an ANSWER ends with a concluding or summary paragraph. Reply with a " +
@@ -268,7 +268,7 @@ The builder returns the judge's **template variables**, never the score:
 @Scorer.llm_judge(
     key="comparison_present",
     name="comparison_present",
-    model="claude-opus-5",
+    model="claude-opus-5-5",
     messages=[
         {"role": "system", "content": (
             "Reply with a single number: 1.0 if the ANSWER explicitly COMPARES the two cities "
@@ -283,7 +283,7 @@ def comparison_present(ctx):
 
 ```ts
 const comparisonPresent = Scorer.llmJudge(
-  { key: "comparison_present", name: "comparison_present", model: "claude-opus-5",
+  { key: "comparison_present", name: "comparison_present", model: "claude-opus-5-5",
     messages: [
       { role: "system", content:
           "Reply with a single number: 1.0 if the ANSWER explicitly COMPARES the two cities " +

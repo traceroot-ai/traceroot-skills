@@ -103,7 +103,7 @@ import { updateCurrentSpan, updateCurrentTrace } from '@traceroot-ai/traceroot';
 updateCurrentSpan({
   input: { query: 'hello' },
   output: { response: 'world' },
-  model: 'gpt-4o',
+  model: 'gpt-6-luna',
   modelParameters: { temperature: 0.7, maxTokens: 1024 },
   usage: { inputTokens: 100, outputTokens: 50 },
 });

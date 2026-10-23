@@ -92,7 +92,7 @@ from traceroot import update_current_span, update_current_trace
 update_current_span(
     input={"query": "hello"},
     output={"response": "world"},
-    model="gpt-4o",
+    model="gpt-6-luna",
     model_parameters={"temperature": 0.7, "max_tokens": 1024},
     usage={"input_tokens": 100, "output_tokens": 50},
     prompt=[{"role": "user", "content": "hello"}],
