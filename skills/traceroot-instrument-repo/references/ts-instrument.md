@@ -41,29 +41,22 @@ TraceRoot.initialize({
 
 ## Add manual spans with `observe()`
 
-Use `observe()` to wrap functions that represent meaningful steps: agent entrypoints, tool calls, orchestration logic.
+Use `observe()` to wrap functions that represent meaningful steps: agent entrypoints, tool calls, orchestration logic. Pass the function and its arguments after the options so the SDK captures input; a zero-argument closure captures no arguments. Python's `@observe` captures bound arguments by default, while TypeScript's `observe()` needs the function arguments passed through.
 
 ```typescript
 import { observe, updateCurrentSpan } from '@traceroot-ai/traceroot';
 
-// Agent entrypoint
-const result = await observe({ name: 'agent.run', type: 'agent' }, async () => {
-  return await runPipeline(query);
-});
+// Pass the function and its arguments through observe() to capture input automatically.
+const result = await observe({ name: 'agent.run', type: 'agent' }, runPipeline, query);
 
 // Tool call
-const docs = await observe({ name: 'search_tool', type: 'tool' }, async () => {
-  return await doSearch(query);
-});
+const docs = await observe({ name: 'search_tool', type: 'tool' }, doSearch, query);
 
-// Generic span with input recorded
-const answer = await observe(
-  { name: 'process_step', type: 'span' },
-  async () => {
-    updateCurrentSpan({ input: { query } });
-    return await processQuery(query);
-  },
-);
+// When a closure is needed, record a safe input explicitly.
+const answer = await observe({ name: 'process_step', type: 'span' }, async () => {
+  updateCurrentSpan({ input: { query } });
+  return await processQuery(query);
+});
 ```
 
 ### `observe()` options
@@ -74,6 +67,8 @@ const answer = await observe(
 | `type` | `string` | `'span'` | `'span'`, `'tool'`, `'agent'`, or `'llm'` |
 | `metadata` | `object` | — | Static metadata to attach |
 | `tags` | `string[]` | — | Tags for filtering |
+| `captureInput` | `boolean` | `true` | Capture function arguments as span input |
+| `captureOutput` | `boolean` | `true` | Capture the return value as span output |
 
 ## Set user and session context
 

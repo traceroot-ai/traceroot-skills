@@ -61,11 +61,13 @@ Install the SDK and initialize **once, at the entry point, before any LLM librar
 ### 5. Add spans
 Wrap agent entrypoints, tool functions, and key orchestration steps (`@observe` / `observe()`), attaching the user/session context inferred in step 2. Prefer auto-instrumentation; add manual spans only where they add signal (see "What to instrument" in the reference).
 
+Before wrapping a function, inspect its signature and return value. Python `@observe` and TypeScript `observe()` capture inputs and outputs by default. If a parameter or return value may contain credentials, auth headers, raw request objects, payment details, or personal data, disable the relevant capture option (`capture_input=False` / `capture_output=False` in Python; `captureInput: false` / `captureOutput: false` in TypeScript). If useful, record only a redacted value with `update_current_span(input=...)` / `updateCurrentSpan({ input: ... })`.
+
 ### 6. Verify (required — do not stop early)
 Run a representative flow, then confirm the trace landed:
 - If the SDK prints a trace URL, share it as proof.
 - Otherwise log the trace id (`get_current_trace_id()` / `getCurrentTraceId()`) and point the user to the TraceRoot UI → Traces to confirm the span tree appears (entrypoint + child/tool spans with input/output).
-- A good trace has: a descriptive name, model + token usage on LLM spans, proper nesting, and no PII/secrets in inputs.
+- Confirm the exported trace has a descriptive name, model + token usage on LLM spans, and proper nesting. Confirm sensitive values are not present in inputs or outputs.
 - If nothing appears → `references/troubleshooting.md`.
 
 ## References

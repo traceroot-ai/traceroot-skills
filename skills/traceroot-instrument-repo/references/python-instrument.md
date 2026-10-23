@@ -69,6 +69,10 @@ async def async_step(input: str) -> str:
 | `type` | `str` | `"span"` | `"span"`, `"tool"`, `"agent"`, or `"llm"` |
 | `metadata` | `dict` | `None` | Static metadata to attach |
 | `tags` | `list[str]` | `None` | Tags for filtering |
+| `capture_input` | `bool` | `True` | Capture function arguments as span input |
+| `capture_output` | `bool` | `True` | Capture the return value as span output |
+| `session_id` | `str` | `None` | Session identifier |
+| `user_id` | `str` | `None` | User identifier |
 
 ## Set user and session context
 
