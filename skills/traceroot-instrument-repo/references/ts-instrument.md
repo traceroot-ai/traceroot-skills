@@ -23,6 +23,35 @@ TraceRoot.initialize({
 
 `TRACEROOT_API_KEY` is read from the environment automatically. No need to pass it explicitly.
 
+### Existing OpenTelemetry provider
+
+The current TypeScript SDK registers its own OpenTelemetry provider through
+`TraceRoot.initialize()`. OpenTelemetry allows the global provider to be registered only once, so
+call `TraceRoot.initialize()` at the entry point **before** another SDK or vendor registers its
+provider (for example, through `NodeSDK.start()`).
+
+After initialization, check the public status API when provider ownership matters:
+
+```typescript
+TraceRoot.initialize({ instrumentModules: { openAI: OpenAI } });
+
+if (!TraceRoot.isTracingActive()) {
+  console.warn(
+    'TraceRoot did not become the global OpenTelemetry provider; resolve provider initialization order.',
+  );
+}
+```
+
+This warning keeps application startup fail-open; it is not evidence that TraceRoot is exporting.
+Resolve the provider ordering and verify the actual spans before reporting successful tracing.
+
+If another provider already owns the global slot, TraceRoot logs a rejected-registration error and
+`TraceRoot.isTracingActive()` returns `false`. Trace context and spans continue through the incumbent
+provider, not TraceRoot's exporter. Initialize TraceRoot earlier, or configure the other SDK to use
+a supported shared-provider/exporter integration. The TraceRoot span processor is not part of the
+public package exports, so do not deep-import private files or claim the setup is verified if the
+global registration was rejected.
+
 Other supported `instrumentModules` keys: `claudeAgentSDK`, `bedrock`, `openaiAgents` (pass the imported module, same as above). Pass only the ones the project uses. For the Vercel AI SDK, no entry is needed — set `experimental_telemetry: { isEnabled: true }` on each call and TraceRoot enriches those spans automatically. For Mastra, use `@traceroot-ai/mastra`'s `TraceRootExporter` instead of `instrumentModules`.
 
 The TS runtime supports fewer frameworks than Python (many agent frameworks are Python-only). The canonical, current list per runtime is https://traceroot.ai/docs/integrations/overview — treat the docs page as the source of truth, since coverage changes over time.

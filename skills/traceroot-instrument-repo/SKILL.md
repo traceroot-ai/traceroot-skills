@@ -41,7 +41,7 @@ Confirm `TRACEROOT_API_KEY` is set (environment or `.env`). If not, ask the user
 ### 2. Analyze (read-only — do not edit yet)
 - Detect the runtime (Python or TypeScript/Node.js). Read the dependency manifest (`pyproject.toml`/`requirements.txt` or `package.json`) and scan imports to see what is actually used.
 - Identify the LLM providers/frameworks in use (OpenAI, Anthropic, LangChain/LangGraph, and others). Coverage differs by runtime and changes over time — the canonical list is https://traceroot.ai/docs/integrations/overview. Match each library you find to its integration in the language reference; don't assume a library is unsupported without checking the docs.
-- Check for **existing tracing/OpenTelemetry** (a `TracerProvider`, `opentelemetry` imports, another vendor's SDK) to avoid double-instrumentation.
+- Check for **existing tracing/OpenTelemetry** (a `TracerProvider`, `opentelemetry` imports, another vendor's SDK) and determine who owns the global provider. Follow the language reference when one is already present: Python can join an existing OpenTelemetry SDK provider, while TypeScript must initialize TraceRoot before another provider registers. Do not silently install a second provider.
 - Infer what user/session context is available:
 
   | If the code has… | Infer | Attach |
@@ -54,7 +54,7 @@ Confirm `TRACEROOT_API_KEY` is set (environment or `.env`). If not, ask the user
 If the target service is clear and the user asked to instrument now, proceed. If it is ambiguous (monorepo, multiple entrypoints), state your plan in one line and ask before editing.
 
 ### 4. Install + initialize
-Install the SDK and initialize **once, at the entry point, before any LLM library imports**, enabling only the integrations the project actually uses. Follow the language reference:
+Install the SDK and initialize **once, at the entry point, before any LLM library imports**, enabling only the integrations the project actually uses. If the analysis found an existing provider, follow the language reference's provider-specific instructions rather than adding another provider or manually attaching private SDK internals:
 - Python → `references/python-instrument.md`
 - TypeScript/Node.js → `references/ts-instrument.md`
 
@@ -63,8 +63,8 @@ Wrap agent entrypoints, tool functions, and key orchestration steps (`@observe` 
 
 ### 6. Verify (required — do not stop early)
 Run a representative flow, then confirm the trace landed:
-- If the SDK prints a trace URL, share it as proof.
-- Otherwise log the trace id (`get_current_trace_id()` / `getCurrentTraceId()`) and point the user to the TraceRoot UI → Traces to confirm the span tree appears (entrypoint + child/tool spans with input/output).
+- If the SDK prints a trace URL, inspect it in the TraceRoot UI → Traces; otherwise log the trace id (`get_current_trace_id()` / `getCurrentTraceId()`) and locate the trace there. In either case, confirm that the expected TraceRoot spans are present, including the entrypoint and its child/tool/LLM spans with the expected input/output and parent-child relationships. In TypeScript, also check `TraceRoot.isTracingActive()` when an existing provider is relevant.
+- If the required spans are missing or detached, follow `references/troubleshooting.md` instead of reporting successful instrumentation.
 - A good trace has: a descriptive name, model + token usage on LLM spans, proper nesting, and no PII/secrets in inputs.
 - If nothing appears → `references/troubleshooting.md`.
 

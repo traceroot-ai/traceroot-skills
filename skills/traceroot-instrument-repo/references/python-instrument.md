@@ -23,6 +23,22 @@ traceroot.initialize(
 
 `TRACEROOT_API_KEY` is read from the environment automatically. No need to pass it explicitly.
 
+### Existing OpenTelemetry provider
+
+`traceroot.initialize()` checks the global OpenTelemetry provider. If an OpenTelemetry SDK
+`TracerProvider` is already registered, TraceRoot reuses it and attaches its span processor
+automatically. The existing provider's sampler and exporters remain in place, so do not create a
+second provider or attach TraceRoot's processor yourself. The integrations configured in
+`traceroot.initialize()` use that same provider.
+
+If the global provider is only the API `ProxyTracerProvider`, TraceRoot creates and registers its
+own SDK provider. A non-SDK provider such as `NoOpTracerProvider` or an incompatible custom
+provider cannot be joined: OpenTelemetry's global registration is set once, so `@observe` spans
+may continue to use that provider and will not reach TraceRoot. In that case, initialize TraceRoot
+before the incompatible provider is installed, or configure the host application to use a
+compatible OpenTelemetry SDK provider, then verify the expected TraceRoot spans and their
+parent-child relationships. Do not report the integration as complete based only on a trace ID.
+
 ### Supported integrations
 
 TraceRoot auto-instruments many model providers and agent frameworks (OpenAI, Anthropic,
