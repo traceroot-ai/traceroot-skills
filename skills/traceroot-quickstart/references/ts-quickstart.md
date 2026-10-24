@@ -18,21 +18,17 @@ import { TraceRoot, observe, getCurrentTraceId } from '@traceroot-ai/traceroot';
 // instrumentModules: {} disables auto-instrumentation — this demo only uses manual spans.
 TraceRoot.initialize({ instrumentModules: {} });
 
-async function step() {
-  return await observe({ name: 'quickstart.step', type: 'span' }, async () => {
-    return { answer: 42 };
-  });
+async function step(query: string) {
+  return { answer: 42, query };
 }
 
-async function main() {
-  return await observe({ name: 'quickstart.root', type: 'agent' }, async () => {
-    const result = { result: await step() };
-    console.log(`traceId=${getCurrentTraceId()}`); // search this in the TraceRoot UI → Traces
-    return result;
-  });
+async function main(query: string) {
+  const result = { result: await observe({ name: 'quickstart.step', type: 'span' }, step, query) };
+  console.log(`traceId=${getCurrentTraceId()}`); // search this in the TraceRoot UI → Traces
+  return result;
 }
 
-await main();
+await observe({ name: 'quickstart.root', type: 'agent' }, main, 'hello');
 await TraceRoot.flush(); // required in short-lived scripts
 ```
 
@@ -40,5 +36,5 @@ await TraceRoot.flush(); // required in short-lived scripts
 
 - `await TraceRoot.flush()` is required at the end of scripts — without it, spans may not be exported before the process exits. Use `flush()` rather than `shutdown()`: both are available, but `shutdown()` also stops tracing for the rest of the process.
 - `instrumentModules: {}` disables auto-instrumentation; this demo only uses manual `observe()` spans.
-- `observe()` is a function wrapper (not a decorator): pass options and an async callback.
+- `observe()` is a function wrapper (not a decorator): pass options and an async callback. Pass the function and its arguments through `observe()` to capture input; a zero-argument closure captures no arguments.
 - To target a self-hosted instance, set `TRACEROOT_HOST_URL` in `.env`.
