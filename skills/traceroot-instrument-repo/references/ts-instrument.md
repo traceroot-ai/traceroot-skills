@@ -25,7 +25,7 @@ TraceRoot.initialize({
 
 Other supported `instrumentModules` keys: `claudeAgentSDK`, `bedrock`, `openaiAgents` (pass the imported module, same as above). Pass only the ones the project uses. For the Vercel AI SDK, no entry is needed — set `experimental_telemetry: { isEnabled: true }` on each call and TraceRoot enriches those spans automatically. For Mastra, use `@traceroot-ai/mastra`'s `TraceRootExporter` instead of `instrumentModules`.
 
-The TS runtime supports fewer frameworks than Python (many agent frameworks are Python-only). The canonical, current list per runtime is https://traceroot.ai/docs/integrations/overview — treat the docs page as the source of truth, since coverage changes over time.
+The TS runtime supports fewer frameworks than Python (many agent frameworks are Python-only). The installed package is the current list — read the `instrumentModules` keys from `node_modules/@traceroot-ai/traceroot`'s type declarations rather than fetching a docs page, which costs a network round trip to learn what the dependency already states. Those keys are the auto-instrumentation coverage; the Vercel AI SDK and Mastra paths above are separate and are not keys. Coverage changes over time, so look rather than assume. Before the dependency is installed there is nothing to read, so consult the published list at https://traceroot.ai/docs/integrations/overview for the analyze step only; once `node_modules` exists, those type declarations are authoritative.
 
 ### LangChain note
 
@@ -103,7 +103,7 @@ import { updateCurrentSpan, updateCurrentTrace } from '@traceroot-ai/traceroot';
 updateCurrentSpan({
   input: { query: 'hello' },
   output: { response: 'world' },
-  model: 'gpt-4o',
+  model: 'gpt-6-luna',
   modelParameters: { temperature: 0.7, maxTokens: 1024 },
   usage: { inputTokens: 100, outputTokens: 50 },
 });
@@ -117,10 +117,14 @@ updateCurrentTrace({
 
 ## Flush in short-lived scripts
 
+For scripts/CLIs/serverless, flush before the process exits (never for long-running servers):
+
 ```typescript
 await runMyScript();
 await TraceRoot.flush(); // export all buffered spans before exit
 ```
+
+> Use `flush()`, not `shutdown()`. `flush()` exports what is buffered and leaves tracing running; `shutdown()` tears the provider down and disables the global OpenTelemetry API, so in a reused serverless container later invocations lose spans — and spans started with `startSpan()` never recover.
 
 ## What to instrument
 
