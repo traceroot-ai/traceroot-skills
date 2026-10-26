@@ -36,6 +36,8 @@ async function main() {
   });
   await run();  // whatever this entry point already does
 }
+
+main();  // however the entry point already starts itself
 ```
 
 A module another process imports in order to run it — a server started by a process manager, a
@@ -54,16 +56,9 @@ The TS runtime supports fewer frameworks than Python (many agent frameworks are 
 
 ### LangChain note
 
-Pass the callbacks manager module, not the LangChain class:
-
-```typescript
-import * as lcCallbackManager from '@langchain/core/callbacks/manager';
-
-// A key in the one initialize() call above, on the run path — not a second call.
-TraceRoot.initialize({
-  instrumentModules: { langchain: lcCallbackManager },
-});
-```
+Pass the callbacks manager module, not the LangChain class, as the `langchain` key of the one
+`initialize()` call above — not in a second call. The snippet there already imports it:
+`import * as lcCallbackManager from '@langchain/core/callbacks/manager'`.
 
 ## Add manual spans with `observe()`
 

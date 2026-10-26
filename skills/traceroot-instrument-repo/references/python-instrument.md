@@ -34,10 +34,12 @@ if __name__ == "__main__":
     main()  # whatever this entry point already does
 ```
 
-Two shapes cannot do this. A module another process imports in order to run it — uvicorn,
-gunicorn, a queue worker — has no such block, so initialize at the framework's own startup hook
-instead. And an application that needs its own credentials while it is still being imported has to
-keep the load at module scope.
+Three shapes cannot do this. A console script — an entry in `[project.scripts]` or
+`console_scripts` — imports its module and calls the function it names, so the `__main__` block
+never runs: initialize at the top of that function instead. A module another process imports in
+order to run it — uvicorn, gunicorn, a queue worker — has no such block, so initialize at the
+framework's own startup hook instead. And an application that needs its own credentials while it
+is still being imported has to keep the load at module scope.
 
 Whatever the shape, the `__main__` block does not on its own keep the tests from exporting.
 `@observe` starts the SDK by itself whenever `TRACEROOT_API_KEY` is in the environment, however it
