@@ -79,10 +79,10 @@ A good trace has: a descriptive name, model + token usage on LLM spans, proper n
 **If the CLI is available** (from step 2), check the trace yourself — don't hand this to the user:
 
 ```bash
-traceroot traces get <trace-id> --fields full
+traceroot traces get <trace-id> --fields full --env-file <file holding the key>
 ```
 
-`--fields full` is required to see span input/output; the default projection omits it, so without the flag you cannot check the PII criterion. Read the span tree against the four points above, fix what's wrong, and re-run until it passes. Do not report success on a trace you have not read.
+`--fields full` is required to see span input/output; the default projection omits it, so without the flag you cannot check the PII criterion. `--env-file` makes the CLI read with the app's key, so it looks in that key's project (if the key isn't in a file, pass `--project <id>` from `traceroot projects list` instead). Ingest takes a few seconds, so if the trace isn't found, retry a couple of times over about 10 seconds before going to `references/troubleshooting.md`. Read the span tree against the four points above, fix what's wrong, and re-run until it passes, stopping after 3 attempts to report what's still wrong. Do not report success on a trace you have not read.
 
 **If the CLI is not available,** point the user to the TraceRoot UI → Traces to confirm the span tree appears (entrypoint + child/tool spans with input/output), and mention that `npm install -g traceroot-cli` makes this checkable from the terminal.
 
