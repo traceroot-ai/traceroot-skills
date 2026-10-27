@@ -101,7 +101,13 @@ update_current_span(
     output={"response": "world"},
     model="gpt-6-luna",
     model_parameters={"temperature": 0.7, "max_tokens": 1024},
-    usage={"input_tokens": 100, "output_tokens": 50},
+    usage={
+        "input_tokens": 100,       # gross, cache-inclusive input tokens
+        "output_tokens": 50,
+        # Optional when reported by the provider:
+        # Add cache_read_tokens, cache_write_tokens, cache_write_1h_tokens, or
+        # reasoning_tokens only when the provider reports those values.
+    },
     prompt=[{"role": "user", "content": "hello"}],
 )
 
@@ -112,6 +118,8 @@ update_current_trace(
     metadata={"environment": "prod"},
 )
 ```
+
+Manual `usage` accepts the exact keys `input_tokens`, `output_tokens`, `cache_read_tokens`, `cache_write_tokens`, `cache_write_1h_tokens`, and `reasoning_tokens` (the cache and reasoning keys are optional when reported by the provider). When matching instrumentor token fields are absent, ingestion uses supplied manual values instead of text-based estimation.
 
 ## Flush in short-lived scripts
 
