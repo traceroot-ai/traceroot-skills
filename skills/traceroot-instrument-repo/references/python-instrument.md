@@ -1,25 +1,52 @@
 # Python instrumentation
 
-## Initialize once
+## Initialize once, on the path that runs the application
 
-Call `traceroot.initialize()` at the application entry point, before any LLM library imports. Load env vars first.
+Call `traceroot.initialize()` where it runs when the application is **run** — inside the entry
+point's `if __name__ == "__main__":` block — and not at module scope. Module scope runs on import,
+and a project's test suite imports its entry point: initialize there and every test that reaches an
+instrumented function exports a trace of its own, each one indistinguishable from the
+application's afterwards. Load the env vars on that same path, beside it.
+
+The order that matters is not the import order. `initialize()` has to run before the first model
+call and before the first `@observe`-decorated function runs: `@observe` starts the SDK itself when
+nothing else has, and a second `initialize()` after that is skipped with a warning, so the
+integrations named here would never be applied. Auto-instrumentation patches the provider library's
+own methods through `wrapt`, which takes effect whatever the import order — so leave the provider
+imports where they are.
 
 ```python
 from dotenv import load_dotenv
-load_dotenv()  # must come before traceroot import
 
 import traceroot
 from traceroot import Integration
 
-traceroot.initialize(
-    integrations=[
-        Integration.OPENAI,      # auto-instruments all OpenAI calls
-        Integration.LANGCHAIN,   # auto-instruments LangChain/LangGraph
-        Integration.ANTHROPIC,   # auto-instruments Anthropic calls
-    ]
-    # Use only the integrations present in the project
-)
+if __name__ == "__main__":
+    load_dotenv()
+    traceroot.initialize(
+        integrations=[
+            Integration.OPENAI,      # auto-instruments all OpenAI calls
+            Integration.LANGCHAIN,   # auto-instruments LangChain/LangGraph
+            Integration.ANTHROPIC,   # auto-instruments Anthropic calls
+        ]
+        # Use only the integrations present in the project
+    )
+    main()  # whatever this entry point already does
 ```
+
+Three shapes cannot do this. A console script — an entry in `[project.scripts]` or
+`console_scripts` — imports its module and calls the function it names, so the `__main__` block
+never runs: initialize at the top of that function instead. A module another process imports in
+order to run it — uvicorn, gunicorn, a queue worker — has no such block, so initialize at the
+framework's own startup hook instead. And an application that needs its own credentials while it
+is still being imported has to keep the load at module scope.
+
+Whatever the shape, the `__main__` block does not on its own keep the tests from exporting.
+`@observe` starts the SDK by itself whenever `TRACEROOT_API_KEY` is in the environment, however it
+got there — a shell export, a CI secret, a `load_dotenv()` some other module runs on import — so
+run the project's own checks with `TRACEROOT_ENABLED=false` in the environment
+(`TRACEROOT_ENABLED=false pytest`) so that they do not export. None of this belongs in the
+project's test configuration — not a `conftest.py`, not a fixture, not a `pytest.ini`.
 
 `TRACEROOT_API_KEY` is read from the environment automatically. No need to pass it explicitly.
 
