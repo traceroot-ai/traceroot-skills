@@ -39,9 +39,9 @@ invoking this, and re-deriving those costs a round trip to reach the same answer
 
 ### 1. API key (non-blocking — skip if you were told it is set)
 TraceRoot reads `TRACEROOT_API_KEY` from the process environment. The SDK does not load `.env`
-itself, so a key kept there only reaches it if the file is loaded before the SDK import — the
-language reference's snippet already does this (`load_dotenv()` in Python, `import 'dotenv/config'`
-in Node). Do not grep or print the key to
+itself, so a key kept there only reaches it if the file is loaded ahead of `initialize()`, on the
+same path — the language reference's snippet already does this (`load_dotenv()` in Python,
+`config()` from `dotenv` in Node). Do not grep or print the key to
 confirm; if the SDK reports at runtime that it is missing, say so then. If it is **not** set, do not stop: still add the instrumentation (it reads the key from the environment at runtime), and tell the user they must set `TRACEROOT_API_KEY` — found in the TraceRoot UI under project settings — before running the verification step. Never hardcode or print the key. Only stop early if you cannot determine which service/runtime to instrument (see step 3).
 
 ### 2. Analyze (read-only — do not edit yet)
@@ -64,7 +64,7 @@ rather than fetching a docs page. Don't assume a library is unsupported without 
 If the target service is clear and the user asked to instrument now, proceed. If it is ambiguous (monorepo, multiple entrypoints), state your plan in one line and ask before editing.
 
 ### 4. Install + initialize
-Install the SDK and initialize **once, at the entry point, before any LLM library imports**, enabling only the integrations the project actually uses. Follow the language reference:
+Install the SDK and initialize **once, on the path that runs the application** — the entry point's `if __name__ == "__main__":` block in Python, the function the entry point calls to start itself in Node, never module scope, because module scope runs on import and the project's test suite imports the entry point. The import order does not matter; what `initialize()` has to precede is the first model call and the first instrumented function. Enable only the integrations the project actually uses. Follow the language reference:
 - Python → `references/python-instrument.md`
 - TypeScript/Node.js → `references/ts-instrument.md`
 
