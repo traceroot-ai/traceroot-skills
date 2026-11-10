@@ -10,6 +10,10 @@ Work top to bottom. Each row is symptom → likely cause → fix.
 | Self-hosted: nothing arrives | backend URL not pointed at your instance | Set `TRACEROOT_HOST_URL` (Python) / `baseUrl` or `TRACEROOT_HOST_URL` (TS). |
 | Trace shows up after a delay | batched export (normal) | Expected — spans batch. For immediate export in scripts/tests, flush (Python) or `disableBatch: true` (TS). |
 | Spans look sparse (LLM only, no tools) | tool/agent functions not wrapped | Wrap them with `@observe` / `observe()` so each call shows input/output. |
+| Python: manual `@observe` spans appear, but LLM calls are missing | `initialize()` was called without `integrations`; Python's default instruments nothing | Pass the integrations used by the project, or `integrations=[]` when only manual spans are intended. |
+| TS: LLM spans are missing in an ESM project | Automatic patching uses `require-in-the-middle` and covers CommonJS requires | Pass explicit `instrumentModules` references for the integrations to patch. |
+| No spans are emitted after setting `TRACEROOT_ENABLED` | The SDK is disabled by that environment variable | Check the value and runtime parsing: Python treats `false`, `0`, `no`, and `off` case-insensitively as disabled; TypeScript disables only for exact lowercase `false`. |
+| A second `initialize()` call does not apply its configuration | Reinitialization is ignored after the first call | Initialize once at startup with the complete configuration. |
 
 ## Localizing a failure
 
