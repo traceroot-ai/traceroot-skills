@@ -105,7 +105,7 @@ updateCurrentSpan({
   output: { response: 'world' },
   model: 'gpt-6-luna',
   modelParameters: { temperature: 0.7, maxTokens: 1024 },
-  usage: { inputTokens: 100, outputTokens: 50 },
+  usage: { input: 100, output: 50 }, // optional cache counts only when reported
 });
 
 updateCurrentTrace({
@@ -114,6 +114,20 @@ updateCurrentTrace({
   tags: ['production'],
 });
 ```
+
+### Token usage fields
+
+The `usage` object accepts these exact `TokenUsage` fields; unknown property names are ignored:
+
+| Field | Meaning |
+|---|---|
+| `input` | Gross input tokens; includes cache-read/cache-write tokens when the provider reports them as input. |
+| `output` | Output token count |
+| `cacheRead` | Cache-read tokens |
+| `cacheWrite` | Cache-write tokens |
+| `total` | Total tokens; derived from input and output when omitted |
+
+For custom provider attributes outside this shape, use `attributes` on `updateCurrentSpan`.
 
 ## Flush in short-lived scripts
 

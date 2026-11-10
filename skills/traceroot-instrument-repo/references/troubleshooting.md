@@ -10,6 +10,7 @@ Work top to bottom. Each row is symptom → likely cause → fix.
 | Self-hosted: nothing arrives | backend URL not pointed at your instance | Set `TRACEROOT_HOST_URL` (Python) / `baseUrl` or `TRACEROOT_HOST_URL` (TS). |
 | Trace shows up after a delay | batched export (normal) | Expected — spans batch. For immediate export in scripts/tests, flush (Python) or `disableBatch: true` (TS). |
 | Spans look sparse (LLM only, no tools) | tool/agent functions not wrapped | Wrap them with `@observe` / `observe()` so each call shows input/output. |
+| LLM span has a model but no token counts (TS) | `usage` uses unsupported field names | Use `input`, `output`, `cacheRead`, `cacheWrite`, or `total` in TypeScript. |
 
 ## Localizing a failure
 
