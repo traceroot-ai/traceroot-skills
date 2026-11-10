@@ -5,7 +5,7 @@
 1. Install dependencies: `npm install @traceroot-ai/traceroot dotenv`
 2. Set `TRACEROOT_API_KEY` in your `.env` file.
 3. Create `quickstart.ts` with the code below.
-4. Run `npx tsx quickstart.ts` — it prints `traceId=...`.
+4. Run `npx tsx quickstart.ts` — it prints `traceId=...`. **Top-level `await` requires an ES module.** For another runner, set `"type": "module"` in `package.json` or rename the file to `quickstart.mts`.
 5. Open the TraceRoot UI → Traces — find the `quickstart.root` trace (search the printed trace id to locate it immediately).
 
 ## quickstart.ts
@@ -40,5 +40,6 @@ await TraceRoot.flush(); // required in short-lived scripts
 
 - `await TraceRoot.flush()` is required at the end of scripts — without it, spans may not be exported before the process exits. Use `flush()` rather than `shutdown()`: both are available, but `shutdown()` also stops tracing for the rest of the process.
 - `instrumentModules: {}` disables auto-instrumentation; this demo only uses manual `observe()` spans.
+- **ESM and auto-instrumentation:** TraceRoot's automatic module patching uses `require-in-the-middle` and applies to CommonJS. In an ESM application, pass explicit `instrumentModules` module references for integrations you want to patch. This demo uses `{}` and manual spans only.
 - `observe()` is a function wrapper (not a decorator): pass options and an async callback.
 - To target a self-hosted instance, set `TRACEROOT_HOST_URL` in `.env`.
