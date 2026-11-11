@@ -115,9 +115,9 @@ updateCurrentTrace({
 });
 ```
 
-## Flush in short-lived scripts
+## Flush before exit
 
-For scripts/CLIs/serverless, flush before the process exits (never for long-running servers):
+Scripts, CLIs, and short-lived functions call flush before they return. A long-running server calls it from the SIGTERM and SIGINT handler, then exits. The SDK's `beforeExit` hook does not run on SIGTERM, and the flush inside it is not awaited, so the process can die mid-export.
 
 ```typescript
 await runMyScript();

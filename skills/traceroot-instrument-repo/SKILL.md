@@ -27,7 +27,7 @@ Add TraceRoot tracing to an existing project. Tracing is **additive** — it nev
 - **Don't duplicate.** If TraceRoot is already initialized, extend it — never add a second init.
 - **Fail open.** The app must still run if `TRACEROOT_API_KEY` is missing — warn, never crash.
 - **Never hardcode secrets.** Read `TRACEROOT_API_KEY` from the environment; never write the literal key into code or echo it back to the user.
-- **Flush only short-lived processes.** Add a flush before exit for scripts/CLIs/serverless; never for long-running servers.
+- **Flush before the process exits.** Scripts and CLIs call flush at the end. A long-running server calls flush from its SIGTERM and SIGINT handler, then exits. Python only auto-flushes from `atexit`, which does not run on SIGTERM. TypeScript auto-flushes on `beforeExit`, which does not run on SIGTERM, and that flush is not awaited.
 
 ## Before writing code
 

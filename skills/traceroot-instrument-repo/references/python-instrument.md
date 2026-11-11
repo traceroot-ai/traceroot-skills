@@ -113,7 +113,9 @@ update_current_trace(
 )
 ```
 
-## Flush in short-lived scripts
+## Flush before exit
+
+Scripts and CLIs call flush at the end. A long-running server also calls it from the SIGTERM and SIGINT handler, then exits. Python registers `atexit`, and that hook does not run on SIGTERM, so a rolling deploy drops the last batch.
 
 ```python
 if __name__ == "__main__":

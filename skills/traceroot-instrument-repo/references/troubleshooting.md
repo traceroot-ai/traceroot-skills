@@ -6,6 +6,7 @@ Work top to bottom. Each row is symptom → likely cause → fix.
 |---|---|---|
 | Nothing in the UI at all | `TRACEROOT_API_KEY` not loaded at runtime | Confirm it is set in the environment. In Python, import `traceroot` **after** `load_dotenv()`. In Node, `import 'dotenv/config'` **before** importing the SDK. |
 | Script runs but no trace | spans never exported before exit | Short-lived scripts/CLIs must flush before exit: `traceroot.flush()` (Python) / `await TraceRoot.flush()` (TS). Use `flush()`, not `shutdown()` — `shutdown()` also disables tracing for the rest of the process. |
+| Server restart drops the last spans | SIGTERM skips the auto-flush | Call `flush()` from the SIGTERM and SIGINT handler, then exit. Python `atexit` and the TypeScript `beforeExit` hook do not run on SIGTERM. |
 | LLM calls not auto-captured | SDK initialized after the LLM client | `initialize()` must run **before** the LLM library is imported/instantiated. |
 | Self-hosted: nothing arrives | backend URL not pointed at your instance | Set `TRACEROOT_HOST_URL` (Python) / `baseUrl` or `TRACEROOT_HOST_URL` (TS). |
 | Trace shows up after a delay | batched export (normal) | Expected — spans batch. For immediate export in scripts/tests, flush (Python) or `disableBatch: true` (TS). |
