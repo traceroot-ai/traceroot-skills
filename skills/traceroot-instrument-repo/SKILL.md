@@ -64,7 +64,7 @@ rather than fetching a docs page. Don't assume a library is unsupported without 
 If the target service is clear and the user asked to instrument now, proceed. If it is ambiguous (monorepo, multiple entrypoints), state your plan in one line and ask before editing.
 
 ### 4. Install + initialize
-Install the SDK and initialize **once, at the entry point, before any LLM library imports**, enabling only the integrations the project actually uses. Follow the language reference:
+Install the SDK and initialize **once, at the entry point the server actually runs, before any LLM library imports**, enabling only the integrations the project actually uses. `if __name__ == "__main__"` does not run under `uvicorn app:app`. Next.js must use `instrumentation.ts` on the Node.js runtime, not the edge runtime. Follow the language reference:
 - Python → `references/python-instrument.md`
 - TypeScript/Node.js → `references/ts-instrument.md`
 

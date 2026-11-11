@@ -4,6 +4,8 @@
 
 Call `TraceRoot.initialize()` at the application entry point, before any LLM library imports. Load env vars first.
 
+Next.js: `instrumentation.ts`, inside `register()`, and only when `process.env.NEXT_RUNTIME === 'nodejs'`. Importing `@traceroot-ai/traceroot` loads `node:child_process` through git detection, so the edge runtime cannot load it.
+
 ```typescript
 import 'dotenv/config'; // must come before TraceRoot import
 import { TraceRoot } from '@traceroot-ai/traceroot';
