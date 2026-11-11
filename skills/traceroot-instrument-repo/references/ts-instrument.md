@@ -66,6 +66,16 @@ const answer = await observe(
 );
 ```
 
+A function that returns a stream ends the span at that return, and the streamed work is not a child of it. Pass an async generator. The span stays open until the generator is exhausted:
+
+```typescript
+const answer = observe({ name: 'stream', type: 'llm' }, async function* (query: string) {
+  for await (const chunk of client.stream(query)) {
+    yield chunk;
+  }
+}, query);
+```
+
 ### `observe()` options
 
 | Option | Type | Default | Description |

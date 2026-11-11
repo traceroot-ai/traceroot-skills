@@ -66,6 +66,13 @@ def search(query: str) -> list:
 @observe(name="async_step", type="span")
 async def async_step(input: str) -> str:
     return await process(input)
+
+# A generator keeps the span open until it is exhausted.
+# A function that returns a stream object ends the span at the return.
+@observe(name="stream", type="llm")
+def stream_answer(query: str):
+    for chunk in client.stream(query):
+        yield chunk
 ```
 
 ### `@observe` parameters
