@@ -28,7 +28,10 @@ A TraceRoot account ([cloud](https://app.traceroot.ai) or [self-hosted](https://
 
 ```bash
 export TRACEROOT_API_KEY=your-api-key
-export TRACEROOT_HOST_URL=https://app.traceroot.ai  # only when self-hosting
+# Leave TRACEROOT_HOST_URL unset for the cloud. The SDKs already use
+# https://app.traceroot.ai. Set it only for a self-hosted instance, to that
+# instance's own URL.
+# export TRACEROOT_HOST_URL=https://traceroot.example.com
 ```
 
 Find your API key in the TraceRoot UI under project settings.
