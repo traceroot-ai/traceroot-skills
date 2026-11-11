@@ -23,7 +23,27 @@ TraceRoot.initialize({
 
 `TRACEROOT_API_KEY` is read from the environment automatically. No need to pass it explicitly.
 
-Other supported `instrumentModules` keys: `claudeAgentSDK`, `bedrock`, `openaiAgents` (pass the imported module, same as above). Pass only the ones the project uses. For the Vercel AI SDK, no entry is needed — set `experimental_telemetry: { isEnabled: true }` on each call and TraceRoot enriches those spans automatically. For Mastra, use `@traceroot-ai/mastra`'s `TraceRootExporter` instead of `instrumentModules`.
+Other supported `instrumentModules` keys: `claudeAgentSDK`, `bedrock`, `openaiAgents` (pass the imported module, same as above). Pass only the ones the project uses. The Vercel AI SDK is not one of those keys. For Mastra, use `@traceroot-ai/mastra`'s `TraceRootExporter` instead of `instrumentModules`.
+
+### Vercel AI SDK
+
+AI SDK 7 does not emit OpenTelemetry spans on its own. `experimental_telemetry: { isEnabled: true }` only notifies telemetry integrations, and none are registered until you add `@ai-sdk/otel`. Install that package at the same patch as `ai` (`ai@7.0.169` with `@ai-sdk/otel@1.0.169`). A mismatched pair fails to compile, because `OpenTelemetry` implements the `Telemetry` type from `ai`.
+
+Register it after `TraceRoot.initialize()`, so the spans use the provider TraceRoot set up:
+
+```typescript
+import { registerTelemetry } from 'ai';
+import { OpenTelemetry } from '@ai-sdk/otel';
+
+TraceRoot.initialize({
+  instrumentModules: {
+    // the modules this project uses
+  },
+});
+registerTelemetry(new OpenTelemetry({ usage: true }));
+```
+
+Once that integration is registered, a call is traced unless it passes `telemetry: { isEnabled: false }`. `telemetry` is the v7 name. `experimental_telemetry` is the v6 name. AI SDK 6 and earlier emit the spans themselves from `experimental_telemetry: { isEnabled: true }` and do not need `@ai-sdk/otel`.
 
 The TS runtime supports fewer frameworks than Python (many agent frameworks are Python-only). The installed package is the current list — read the `instrumentModules` keys from `node_modules/@traceroot-ai/traceroot`'s type declarations rather than fetching a docs page, which costs a network round trip to learn what the dependency already states. Those keys are the auto-instrumentation coverage; the Vercel AI SDK and Mastra paths above are separate and are not keys. Coverage changes over time, so look rather than assume. Before the dependency is installed there is nothing to read, so consult the published list at https://traceroot.ai/docs/integrations/overview for the analyze step only; once `node_modules` exists, those type declarations are authoritative.
 
