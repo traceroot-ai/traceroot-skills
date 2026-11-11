@@ -23,6 +23,10 @@ TraceRoot.initialize({
 
 `TRACEROOT_API_KEY` is read from the environment automatically. No need to pass it explicitly.
 
+### Environment
+
+TypeScript reads `TRACEROOT_ENVIRONMENT`, or `initialize({ environment })`. Each span gets `traceroot.environment`, which is what the backend stores, and `deployment.environment` as well. Leave it unset and that column stays empty.
+
 Other supported `instrumentModules` keys: `claudeAgentSDK`, `bedrock`, `openaiAgents` (pass the imported module, same as above). Pass only the ones the project uses. For the Vercel AI SDK, no entry is needed — set `experimental_telemetry: { isEnabled: true }` on each call and TraceRoot enriches those spans automatically. For Mastra, use `@traceroot-ai/mastra`'s `TraceRootExporter` instead of `instrumentModules`.
 
 The TS runtime supports fewer frameworks than Python (many agent frameworks are Python-only). The installed package is the current list — read the `instrumentModules` keys from `node_modules/@traceroot-ai/traceroot`'s type declarations rather than fetching a docs page, which costs a network round trip to learn what the dependency already states. Those keys are the auto-instrumentation coverage; the Vercel AI SDK and Mastra paths above are separate and are not keys. Coverage changes over time, so look rather than assume. Before the dependency is installed there is nothing to read, so consult the published list at https://traceroot.ai/docs/integrations/overview for the analyze step only; once `node_modules` exists, those type declarations are authoritative.

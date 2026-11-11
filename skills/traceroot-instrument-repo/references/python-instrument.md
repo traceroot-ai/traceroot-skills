@@ -23,6 +23,10 @@ traceroot.initialize(
 
 `TRACEROOT_API_KEY` is read from the environment automatically. No need to pass it explicitly.
 
+### Environment
+
+Do not set `TRACEROOT_ENVIRONMENT` and expect a Python service to be tagged. The name is declared, and `initialize()` has no `environment` argument. Nothing reads it, so `traceroot.environment` is never written. That is the attribute the backend stores.
+
 ### Supported integrations
 
 TraceRoot auto-instruments many model providers and agent frameworks (OpenAI, Anthropic,
