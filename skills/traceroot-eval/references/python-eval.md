@@ -3,9 +3,11 @@
 ## Steps
 
 1. Install: `pip install traceroot python-dotenv` (plus whatever your task needs).
-2. Set `TRACEROOT_API_KEY` in `.env` so the run reports — or pass `local=True` to skip reporting.
-3. Create the eval script (below) and run it: `python eval_weather.py`.
-4. Open the printed dashboard URL to see the run, its metrics, and each case's trace.
+2. Put the task's provider key (`ANTHROPIC_API_KEY` here) in `.env`. A local run needs no
+   TraceRoot key.
+3. Create the eval file (below) and run it: `traceroot evals run eval_weather.py`. It prints the
+   run id and each metric's mean.
+4. To put the run on TraceRoot, with each case's trace, add `--upload` (needs a project API key).
 
 ## eval_weather.py
 
@@ -16,7 +18,7 @@ load_dotenv()
 import os
 import anthropic
 import traceroot
-from traceroot import Dataset, Score, evaluate
+from traceroot import Dataset, Evaluation, Score
 
 MODEL = "claude-opus-5-5"
 SYSTEM_PROMPT = (
@@ -36,7 +38,7 @@ CASES = [
      "cities": ["London", "Paris"]},
 ]
 
-# Identity is the NAME. evaluate() provisions this for you — no manual push.
+# Identity is the NAME. An uploaded run provisions this for you — no manual push.
 DATASET = Dataset("weather-no-conclusion")
 for case in CASES:
     DATASET.add(input=case)
@@ -70,19 +72,19 @@ def coverage(input, output, expected=None):
     )
 
 
-if __name__ == "__main__":
-    # On a terminal this prints its own summary and the run URL — no manual print needed.
-    result = evaluate(
-        name="weather-no-conclusion",
-        dataset=DATASET,
-        task=task,
-        scorers=[coverage],
-    )
+# Module level, so `traceroot evals run` finds it. Nothing runs at import.
+evaluation = Evaluation(
+    name="weather-no-conclusion",
+    dataset=DATASET,
+    task=task,
+    scorers=[coverage],
+)
 ```
 
-## `evaluate()` parameters
+## `Evaluation` / `evaluate()` parameters
 
-Keyword-only. `name`, `dataset`, `task`, `scorers` are what you need for a first eval.
+`evaluate(...)` takes the same arguments and runs in process, for calling an eval from your own
+code. Keyword-only. `name`, `dataset`, `task`, `scorers` are what you need for a first eval.
 
 | Parameter | Meaning |
 |---|---|

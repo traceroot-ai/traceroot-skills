@@ -2,12 +2,16 @@
 
 ## Steps
 
-1. Install: `npm install @traceroot-ai/traceroot dotenv` (plus whatever your task needs).
-2. Set `TRACEROOT_API_KEY` in `.env` so the run reports — or pass `local: true` to skip reporting.
-3. Create the eval script (below) and run it: `npx tsx eval-weather.ts`.
-4. Open the printed dashboard URL to see the run, its metrics, and each case's trace.
+1. Install: `npm install @traceroot-ai/traceroot dotenv` (plus whatever your task needs), and
+   `npm i -D tsx` — the eval runner loads the file through tsx.
+2. Put the task's provider key (`ANTHROPIC_API_KEY` here) in `.env`. A local run needs no
+   TraceRoot key.
+3. Create the eval file (below) and run it: `traceroot evals run eval-weather.ts`. It prints the
+   run id and each metric's mean.
+4. To put the run on TraceRoot, with each case's trace, add `--upload` (needs a project API key).
 
-Node >= 20. Everything eval-related is exported from the package root — there is no subpath.
+Node 20.6 or later. Everything eval-related is exported from the package root — there is no
+subpath.
 
 ## eval-weather.ts
 
@@ -16,7 +20,7 @@ import "dotenv/config";
 
 import Anthropic from "@anthropic-ai/sdk";
 import {
-  initialize, evaluate, Dataset,
+  initialize, Evaluation, Dataset,
   type Score, type ScorerContext,
 } from "@traceroot-ai/traceroot";
 
@@ -42,7 +46,7 @@ const CASES: WeatherInput[] = [
 initialize({ apiKey: process.env.TRACEROOT_API_KEY, instrumentModules: { anthropic: Anthropic } });
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-// Identity is the NAME. evaluate() provisions this for you — no manual push.
+// Identity is the NAME. An uploaded run provisions this for you — no manual push.
 const DATASET = new Dataset("weather-no-conclusion");
 for (const c of CASES) DATASET.add(c);
 
@@ -74,24 +78,20 @@ const coverage = ({ input, output }: ScorerContext): Score => {
   };
 };
 
-async function main() {
-  // On a terminal this logs its own summary and the run URL — no manual log needed.
-  await evaluate({
-    name: "weather-no-conclusion",
-    dataset: DATASET,
-    task: (input) => task(input as WeatherInput),
-    scorers: [coverage],
-  });
-}
-
-void main();
+// Exported at module level, so `traceroot evals run` finds it. Nothing runs at import.
+export const evaluation = new Evaluation({
+  name: "weather-no-conclusion",
+  dataset: DATASET,
+  task: (input) => task(input as WeatherInput),
+  scorers: [coverage],
+});
 ```
 
-`evaluate` is async — `await` it inside a `main()` function rather than relying on top-level await.
+## `Evaluation` / `evaluate()` options
 
-## `evaluate()` options
-
-One options object. `name`, `task`, `scorers`, and `dataset` are what you need for a first eval.
+`await evaluate({...})` takes the same options and runs in process, for calling an eval from your
+own code. One options object. `name`, `task`, `scorers`, and `dataset` are what you need for a
+first eval.
 
 | Option | Meaning |
 |---|---|
