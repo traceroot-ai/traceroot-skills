@@ -27,7 +27,7 @@ traceroot.initialize(
 
 ### Environment
 
-Do not set `TRACEROOT_ENVIRONMENT` and expect a Python service to be tagged. The name is declared, and `initialize()` has no `environment` argument. Nothing reads it, so `traceroot.environment` is never written. That is the attribute the backend stores.
+Do not set `TRACEROOT_ENVIRONMENT` and expect a Python service to be tagged. The SDK declares the name in `env.py` and never reads it, and `initialize()` has no `environment` argument, so `traceroot.environment` is never written. That is the attribute the backend stores. `update_current_trace(metadata={"environment": ...})` writes `traceroot.trace.metadata`. It does not set `traceroot.environment`.
 
 ### Supported integrations
 

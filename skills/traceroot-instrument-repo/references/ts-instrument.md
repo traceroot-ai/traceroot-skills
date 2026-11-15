@@ -43,7 +43,7 @@ TraceRoot.initialize({
 
 ### Environment
 
-TypeScript reads `TRACEROOT_ENVIRONMENT`, or `initialize({ environment })`. Each span gets `traceroot.environment`, which is what the backend stores, and `deployment.environment` as well. Leave it unset and that column stays empty.
+TypeScript reads `TRACEROOT_ENVIRONMENT`, or `initialize({ environment })`. Each span gets `traceroot.environment`, which is what the backend stores, and `deployment.environment` as well. If unset, `traceroot.environment` is left empty.
 
 Other supported `instrumentModules` keys: `claudeAgentSDK`, `bedrock`, `openaiAgents` (pass the imported module, same as above). Pass only the ones the project uses. The Vercel AI SDK is not one of those keys. For Mastra, use `@traceroot-ai/mastra`'s `TraceRootExporter` instead of `instrumentModules`.
 
