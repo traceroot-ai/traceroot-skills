@@ -59,8 +59,9 @@ read those rather than guessing a flag name.
   final.
 - **`evals run` adds two codes:** `17` harness — the runner couldn't run the file, and the message
   names the fix — and `18` regressed — against the baseline, a case that passed now fails or one
-  that ran cleanly now errors, and the output names it. Under `--json`, a run that happened (exit
-  `0`, `18`, or `2` after the run) prints its result document on stdout rather than the envelope.
+  that ran cleanly now errors, and the output names it. Under `--json`, once an evaluation has
+  finished, the result document goes on stdout rather than the envelope, whether the exit is `0`,
+  `2`, `17` or `18`; a runner failure after that point is in the document's `failure`.
 
 ## Guardrails
 

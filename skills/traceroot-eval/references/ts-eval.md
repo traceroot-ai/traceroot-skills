@@ -78,7 +78,7 @@ const coverage = ({ input, output }: ScorerContext): Score => {
   };
 };
 
-// Exported at module level, so `traceroot evals run` finds it. Nothing runs at import.
+// Exported at module level, so `traceroot evals run` finds it. Defining it doesn't run it.
 export const evaluation = new Evaluation({
   name: "weather-no-conclusion",
   dataset: DATASET,
@@ -89,9 +89,9 @@ export const evaluation = new Evaluation({
 
 ## `Evaluation` / `evaluate()` options
 
-`await evaluate({...})` takes the same options and runs in process, for calling an eval from your
-own code. One options object. `name`, `task`, `scorers`, and `dataset` are what you need for a
-first eval.
+`new Evaluation({...})` and `await evaluate({...})` take the same options object; `evaluate()` runs
+in process, for calling an eval from your own code. `name`, `task`, `scorers`, and `dataset` are
+what you need for a first eval.
 
 | Option | Meaning |
 |---|---|

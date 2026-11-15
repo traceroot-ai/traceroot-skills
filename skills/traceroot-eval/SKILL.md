@@ -54,9 +54,11 @@ Turn the workflow below into a checklist (TodoWrite) and execute it in order.
 ### 1. Precondition — credentials
 - **A local run needs no TraceRoot key.** `traceroot evals run` keeps the run on this machine: the
   runner gets no API key, and nothing goes to TraceRoot.
-- **`--upload` needs a project API key.** A browser login can't upload eval runs. If
-  `traceroot status` shows no `API key:` line, ask the user to run `traceroot login --api-key <key>`
-  or set `TRACEROOT_API_KEY` (TraceRoot UI → project settings).
+- **`--upload` needs a project API key.** A browser login can't upload eval runs. Don't check
+  `traceroot status` for the key first: while a browser login is active, it shows that login and
+  not the key. When the user asks for an upload, run with `--upload`. A missing or rejected key
+  exits `3` before any case runs, so the attempt costs nothing; then ask the user to run
+  `traceroot login --api-key <key>` or set `TRACEROOT_API_KEY` (TraceRoot UI → project settings).
 - **Model provider keys are needed either way** — the task's own, and an LLM judge's.
   `Scorer.llm_judge` calls the provider directly — an `anthropic`/`claude` model needs the
   `anthropic` package and `ANTHROPIC_API_KEY`; anything else goes to `openai` and needs
@@ -131,15 +133,18 @@ Otherwise run it and read what it prints: the run id and each metric's mean. Wha
 1. Run the evaluation once and keep the run id it prints.
 2. Change the code.
 3. Run it again against that run: `traceroot evals run <file> --baseline <run id>`. With `--json`,
-   stdout is one document whose `outcome` is `ok`, `regressed` or `not_comparable`.
+   stdout is one document whenever the evaluation ran. Its `outcome` is `ok`, `regressed`,
+   `not_comparable`, `not_uploaded`, `interrupted` or `failed`, and its `failure` is null unless
+   the runner failed after some evaluations finished; then it holds the failure's `kind` and
+   `message`.
 4. Act on the exit code:
 
 | Exit | Meaning | Do |
 |---|---|---|
-| `0` | Nothing that passed in the baseline fails now | Report the run id. |
+| `0` | Nothing newly fails or newly errors. A pair that stopped passing under a new version of its scorer is named (under `changed` in `--json`), but isn't a regression | Report the run id, and any pair named under a new scorer version. |
 | `18` | A case newly fails or newly errors; the output names each case and scorer | Fix the code, or report the cases if the change was meant to move them. Don't weaken a scorer or move the baseline to get a `0`. |
-| `17` | The harness failed: no module-level evaluation, no `tsx`, an SDK too old, or a `fatal` from the runner | Apply the fix the message names. It says nothing about the code under test. |
-| `2`, `4` | The baseline can't be used: not comparable (the dataset or its cases changed, or it was sampled or unfinished) or not found | The message says why. Keep the cases fixed across both runs, or run without `--baseline` to start a new one. |
+| `17` | The harness failed: no module-level evaluation, no `tsx`, an SDK too old, or a `fatal` from the runner. Evaluations that finished before it are still compared, and a regression among them exits `18` | Apply the fix the message names. If an evaluation finished first, `--json` prints no envelope: the same message is the document's `failure.message` on stdout. It says nothing about the code under test. |
+| `2`, `4` | The baseline can't be used: not comparable (the dataset or its cases changed, a case repeats a score name, or it was sampled or unfinished) or not found. Under `--upload`, either can instead be the API key check's HTTP status (a 404 exits `4`), and then nothing ran | The message says why. Keep the cases fixed across both runs and each case's score names distinct, or run without `--baseline` to start a new one. A failed key check isn't about the baseline: report its message. |
 | `3` | `--upload` has no project API key, or it was rejected | Ask the user to run `traceroot login --api-key <key>` or set `TRACEROOT_API_KEY`. |
 
 Only a score with a verdict can regress: a bool, or a number whose scorer declares a `threshold`.

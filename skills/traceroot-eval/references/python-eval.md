@@ -72,7 +72,7 @@ def coverage(input, output, expected=None):
     )
 
 
-# Module level, so `traceroot evals run` finds it. Nothing runs at import.
+# Module level, so `traceroot evals run` finds it. Defining it doesn't run it.
 evaluation = Evaluation(
     name="weather-no-conclusion",
     dataset=DATASET,
@@ -83,8 +83,9 @@ evaluation = Evaluation(
 
 ## `Evaluation` / `evaluate()` parameters
 
-`evaluate(...)` takes the same arguments and runs in process, for calling an eval from your own
-code. Keyword-only. `name`, `dataset`, `task`, `scorers` are what you need for a first eval.
+`Evaluation(...)` and `evaluate(...)` take the same keyword-only arguments (`evaluate()` also
+takes `transport`, an alias for `report_to`); `evaluate()` runs in process, for calling an eval
+from your own code. `name`, `dataset`, `task`, `scorers` are what you need for a first eval.
 
 | Parameter | Meaning |
 |---|---|
