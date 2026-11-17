@@ -209,8 +209,9 @@ for the errored items, or `run.results` for every item.
 to the mean, categorical values to the count only.
 
 A scorer that raises fails that scorer on that case and marks the case `errored`; the run itself
-completes and reports. A scorer that returns a non-finite number (`nan`, `inf`) is recorded as a
-scorer error too, rather than a fake zero or a null.
+completes and reports. A scorer that returns a non-finite number (`nan`, `inf`) never counts as a
+zero: an uploaded run records it as a scorer error, and a local run counts the score but leaves it
+out of the mean.
 
 ## Running without reporting
 
@@ -219,7 +220,8 @@ nowhere — no credentials, no HTTP, no dataset publish, and a **non-exporting t
 leave the process either. Safe on a laptop or in CI without a key.
 
 One trade-off to name for the user: comparing candidates across `candidate_version` happens on the
-dashboard, so a local run has nothing to compare. Drafting is local; comparing is reported.
+dashboard, so only reported runs appear there. To check a change against an earlier run on this
+machine, use `traceroot evals run <file> --baseline <run id>`.
 
 ## Asserting the wire in tests
 

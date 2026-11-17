@@ -182,8 +182,9 @@ item. `aggregateScores(...)` gives each metric's mean and count; numeric and boo
 contribute to the mean, categorical values to the count only.
 
 A scorer that throws fails that scorer on that case and marks the case `errored`; the run itself
-completes and reports. A scorer that returns a non-finite number (`NaN`, `Infinity`) is recorded as
-a scorer error too, rather than a fake zero or a null.
+completes and reports. A scorer that returns a non-finite number (`NaN`, `Infinity`) never counts
+as a zero: an uploaded run records it as a scorer error, and a local run counts the score but leaves
+it out of the mean.
 
 ## Running without reporting
 

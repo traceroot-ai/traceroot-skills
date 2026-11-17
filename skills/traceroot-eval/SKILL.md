@@ -59,11 +59,11 @@ Turn the workflow below into a checklist (TodoWrite) and execute it in order.
   not the key. When the user asks for an upload, run with `--upload`. A missing or rejected key
   exits `3` before any case runs, so the attempt costs nothing; then ask the user to run
   `traceroot login --api-key <key>` or set `TRACEROOT_API_KEY` (TraceRoot UI → project settings).
-- **Model provider keys are needed either way** — the task's own, and an LLM judge's.
-  `Scorer.llm_judge` calls the provider directly — an `anthropic`/`claude` model needs the
-  `anthropic` package and `ANTHROPIC_API_KEY`; anything else goes to `openai` and needs
-  `OPENAI_API_KEY`. A missing provider key fails at scorer time, part-way through a run that
-  already cost money. Check it before you run, not after.
+- **A task or judge that calls a model needs that provider's key, local or uploaded.** A task
+  and scorers that call no model need none. `Scorer.llm_judge` calls the provider directly — an
+  `anthropic`/`claude` model needs the `anthropic` package and `ANTHROPIC_API_KEY`; anything else
+  goes to `openai` and needs `OPENAI_API_KEY`. A missing provider key fails at scorer time,
+  part-way through a run that already cost money. Check it before you run, not after.
 
 ### 2. Analyze (read-only — do not edit yet)
 - Detect the runtime (Python or TypeScript/Node.js).
@@ -116,9 +116,9 @@ Define the evaluation **at module level** — `evaluation = Evaluation(...)` in 
 - TypeScript/Node.js → `references/ts-eval.md` (the runner needs `tsx`)
 
 ### 7. Verify (required — do not stop early)
-If anything real is still missing — no provider key, no task function, no real cases — stop and say
-exactly what you need. Hand over the file and name the blocker. Never fabricate a result, and never
-invent cases just to make the run go.
+If anything real is still missing — a provider key the task or a judge needs, the task function,
+real cases — stop and say exactly what you need. Hand over the file and name the blocker. Never
+fabricate a result, and never invent cases just to make the run go.
 
 Otherwise run it and read what it prints: the run id and each metric's mean. What you're checking:
 - Every scorer you wrote appears as a metric. A scorer that errored on every case reports no
