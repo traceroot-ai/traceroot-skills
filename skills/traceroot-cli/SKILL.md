@@ -21,8 +21,8 @@ compatibility: >
 
 # TraceRoot CLI
 
-Read the TraceRoot platform from the terminal. This is a router: it names the command that answers a
-question and leaves the flags to `--help`.
+Read the TraceRoot platform from the terminal, and check a change against an evaluation locally.
+This is a router: it names the command that answers a question and leaves the flags to `--help`.
 
 ## First, establish context
 
@@ -38,7 +38,8 @@ CLI reports as `usage` (exit `2`) with a hint naming the flag, not as an auth fa
 | What happened in this trace? | `traceroot traces get <trace-id> --fields full --json` |
 | Which traces are recent, or match a filter? | `traceroot traces list --json` |
 | Which evaluations exist? | `traceroot evals list --json` |
-| Did that evaluation regress? | `traceroot evals runs list --evaluation-id <id> --json`, then `traceroot evals runs get <run-id> --json` |
+| Did a change regress an evaluation? | `traceroot evals run <file> --baseline <run id> --json` — runs it on this machine against a run an earlier `evals run` printed |
+| How did a recorded run score? | `traceroot evals runs list --evaluation-id <id> --json`, then `traceroot evals runs get <run-id> --json` |
 | What cases went into a run? | `traceroot datasets get <dataset-id> --json` |
 | Did a detector fire? | `traceroot findings list --json` |
 | Anything the rows above miss | `traceroot sql "SELECT count() FROM spans" --json` |
@@ -56,6 +57,11 @@ read those rather than guessing a flag name.
   `{"error":{"code":"auth","message":"..."}}`. Branch on the code, never on the message: `2` means
   fix the invocation — a missing `--project` included — `3` means re-auth, `5` is retryable, `4` is
   final.
+- **`evals run` adds two codes:** `17` harness — the runner couldn't run the file, and the message
+  names the fix — and `18` regressed — against the baseline, a case that passed now fails or one
+  that ran cleanly now errors, and the output names it. Under `--json`, once an evaluation has
+  finished, the result document goes on stdout rather than the envelope, whether the exit is `0`,
+  `2`, `17` or `18`; a runner failure after that point is in the document's `failure`.
 
 ## Guardrails
 
@@ -79,6 +85,10 @@ read those rather than guessing a flag name.
   export` writes a directory, and `--force` clears a non-empty one. Reading: `traceroot sql --file
   <path>` takes a query from any readable file and sends its contents to the API, so it leaks a
   file rather than clobbering one. Use none of them — print the result and let the user redirect
-  it.
+  it. `evals run` saves its run under `./.traceroot/eval/runs`; give `--baseline` a run id, never a
+  path.
+- **Keep `evals run` local.** Never add `--upload`, `--host`, `--auth-host`, `--env-file` or
+  `--api-key` to it unless the user asked for it, and run only an evaluation file you wrote or the
+  user named.
 - Verifying a trace you have just instrumented belongs to `traceroot-instrument-repo` and
   `traceroot-quickstart`. Don't repeat it here.

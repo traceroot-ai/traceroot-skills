@@ -3,9 +3,11 @@
 ## Steps
 
 1. Install: `pip install traceroot python-dotenv` (plus whatever your task needs).
-2. Set `TRACEROOT_API_KEY` in `.env` so the run reports — or pass `local=True` to skip reporting.
-3. Create the eval script (below) and run it: `python eval_weather.py`.
-4. Open the printed dashboard URL to see the run, its metrics, and each case's trace.
+2. Put the task's provider key (`ANTHROPIC_API_KEY` here) in `.env`. A local run needs no
+   TraceRoot key.
+3. Create the eval file (below) and run it: `traceroot evals run eval_weather.py`. It prints the
+   run id and each metric's mean.
+4. To put the run on TraceRoot, with each case's trace, add `--upload` (needs a project API key).
 
 ## eval_weather.py
 
@@ -16,7 +18,7 @@ load_dotenv()
 import os
 import anthropic
 import traceroot
-from traceroot import Dataset, Score, evaluate
+from traceroot import Dataset, Evaluation, Score
 
 MODEL = "claude-opus-5-5"
 SYSTEM_PROMPT = (
@@ -36,7 +38,7 @@ CASES = [
      "cities": ["London", "Paris"]},
 ]
 
-# Identity is the NAME. evaluate() provisions this for you — no manual push.
+# Identity is the NAME. An uploaded run provisions this for you — no manual push.
 DATASET = Dataset("weather-no-conclusion")
 for case in CASES:
     DATASET.add(input=case)
@@ -70,19 +72,20 @@ def coverage(input, output, expected=None):
     )
 
 
-if __name__ == "__main__":
-    # On a terminal this prints its own summary and the run URL — no manual print needed.
-    result = evaluate(
-        name="weather-no-conclusion",
-        dataset=DATASET,
-        task=task,
-        scorers=[coverage],
-    )
+# Module level, so `traceroot evals run` finds it. Defining it doesn't run it.
+evaluation = Evaluation(
+    name="weather-no-conclusion",
+    dataset=DATASET,
+    task=task,
+    scorers=[coverage],
+)
 ```
 
-## `evaluate()` parameters
+## `Evaluation` / `evaluate()` parameters
 
-Keyword-only. `name`, `dataset`, `task`, `scorers` are what you need for a first eval.
+`Evaluation(...)` and `evaluate(...)` take the same keyword-only arguments (`evaluate()` also
+takes `transport`, an alias for `report_to`); `evaluate()` runs in process, for calling an eval
+from your own code. `name`, `dataset`, `task`, `scorers` are what you need for a first eval.
 
 | Parameter | Meaning |
 |---|---|
@@ -206,8 +209,9 @@ for the errored items, or `run.results` for every item.
 to the mean, categorical values to the count only.
 
 A scorer that raises fails that scorer on that case and marks the case `errored`; the run itself
-completes and reports. A scorer that returns a non-finite number (`nan`, `inf`) is recorded as a
-scorer error too, rather than a fake zero or a null.
+completes and reports. A scorer that returns a non-finite number (`nan`, `inf`) never counts as a
+zero: an uploaded run records it as a scorer error, and a local run counts the score but leaves it
+out of the mean.
 
 ## Running without reporting
 
@@ -216,7 +220,8 @@ nowhere — no credentials, no HTTP, no dataset publish, and a **non-exporting t
 leave the process either. Safe on a laptop or in CI without a key.
 
 One trade-off to name for the user: comparing candidates across `candidate_version` happens on the
-dashboard, so a local run has nothing to compare. Drafting is local; comparing is reported.
+dashboard, so only reported runs appear there. To check a change against an earlier run on this
+machine, use `traceroot evals run <file> --baseline <run id>`.
 
 ## Asserting the wire in tests
 
