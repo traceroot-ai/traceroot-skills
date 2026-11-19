@@ -6,7 +6,7 @@ Skills for adding [TraceRoot](https://traceroot.ai) tracing and running offline 
 
 - **Add tracing to my app** → `traceroot-instrument-repo` — instruments an existing codebase: auto-instrumentation plus manual spans for agents, tools, and LLM calls.
 - **Just show me a trace / verify my setup** → `traceroot-quickstart` — a minimal runnable demo that produces one trace in a couple of minutes.
-- **Read my traces and evaluations** → `traceroot-cli` — reads traces, evaluation runs, and detector findings from the terminal with the TraceRoot CLI.
+- **Read my traces and evaluations** → `traceroot-cli` — reads traces, evaluation runs, detector findings, and signals from the terminal with the TraceRoot CLI.
 - **Evaluate my LLM app** → `traceroot-eval` — offline evaluations: a dataset of cases, a task, and scorers (including LLM judges), run and reported to TraceRoot.
 
 ## Install

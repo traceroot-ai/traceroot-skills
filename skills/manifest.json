@@ -36,11 +36,12 @@
     },
     {
       "name": "traceroot-cli",
-      "description": "Read traces, evaluation runs and detector findings from the terminal with the TraceRoot CLI.",
+      "description": "Read traces, evaluation runs, detector findings and signals from the terminal with the TraceRoot CLI.",
       "bestFor": [
         "reading a trace",
         "evaluation regressions",
         "detector findings",
+        "recurring problems",
         "SQL over spans"
       ],
       "bundledWithCli": true

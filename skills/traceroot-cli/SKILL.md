@@ -3,9 +3,10 @@ name: traceroot-cli
 description: >
   Read what TraceRoot has already recorded, from the terminal, with the `traceroot` CLI. Use when
   the user asks what happened in a trace, whether an evaluation regressed, which evaluation runs or
-  datasets exist, what a detector found, or anything that means querying spans — and once a repo is
-  instrumented, whenever the question turns from "is tracing wired up" to "what do the traces say".
-  Also use when the user asks what the TraceRoot CLI can do.
+  datasets exist, what a detector found, what keeps failing (signals, the recurring problems that
+  findings group into), or anything that means querying spans — and once a repo is instrumented,
+  whenever the question turns from "is tracing wired up" to "what do the traces say". Also use when
+  the user asks what the TraceRoot CLI can do.
 allowed-tools:
   - Bash(traceroot --help)
   - Bash(traceroot status)
@@ -41,11 +42,23 @@ CLI reports as `usage` (exit `2`) with a hint naming the flag, not as an auth fa
 | Did that evaluation regress? | `traceroot evals runs list --evaluation-id <id> --json`, then `traceroot evals runs get <run-id> --json` |
 | What cases went into a run? | `traceroot datasets get <dataset-id> --json` |
 | Did a detector fire? | `traceroot findings list --json` |
+| What keeps going wrong? | `traceroot signals list --status open --json` |
+| What is this problem, and which traces hit it? | `traceroot signals get <signal-id> --json` |
+| What did the root cause analysis find? | `traceroot findings get <finding-id> --json` |
 | Anything the rows above miss | `traceroot sql "SELECT count() FROM spans" --json` |
 
 `--fields full` is the one flag worth naming here: without it, `traces get` omits span input and
 output. For everything else, `traceroot --help` is the map and `<command> --help` is the flags —
 read those rather than guessing a flag name.
+
+To follow a recurring problem from its signal to the traces behind it:
+
+1. List the open signals: `traceroot signals list --status open --json`.
+2. Read one: `traceroot signals get <signal-id> --json`.
+3. Open one of its recent traces: `traceroot traces get <trace-id> --fields full --json`.
+4. Read that hit's finding for the analysis: `traceroot findings get <finding-id> --json`.
+
+A merged signal names the signal it moved to in `merged_into_id`; read that one instead.
 
 ## Built for agents
 
