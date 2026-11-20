@@ -3,7 +3,7 @@
   "skills": [
     {
       "name": "traceroot-instrument-repo",
-      "description": "Add TraceRoot tracing to an existing Python or TypeScript/Node.js app.",
+      "description": "Add traceroot tracing to an existing Python or TypeScript/Node.js app.",
       "bestFor": [
         "production apps",
         "agents",
@@ -16,16 +16,16 @@
     },
     {
       "name": "traceroot-quickstart",
-      "description": "Minimal runnable demo that produces one TraceRoot trace.",
+      "description": "Minimal runnable demo that produces one traceroot trace.",
       "bestFor": [
         "verifying API keys",
-        "seeing TraceRoot quickly"
+        "seeing traceroot quickly"
       ],
       "bundledWithCli": true
     },
     {
       "name": "traceroot-eval",
-      "description": "Write and run offline evaluations with the TraceRoot SDK.",
+      "description": "Write and run offline evaluations with the traceroot SDK.",
       "bestFor": [
         "eval datasets",
         "scorers",
@@ -36,7 +36,7 @@
     },
     {
       "name": "traceroot-cli",
-      "description": "Read traces, evaluation runs and detector findings from the terminal with the TraceRoot CLI.",
+      "description": "Read traces, evaluation runs and detector findings from the terminal with the traceroot CLI.",
       "bestFor": [
         "reading a trace",
         "evaluation regressions",
