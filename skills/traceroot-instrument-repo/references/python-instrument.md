@@ -31,7 +31,7 @@ Do not set `TRACEROOT_ENVIRONMENT` and expect a Python service to be tagged. The
 
 ### Supported integrations
 
-TraceRoot auto-instruments many model providers and agent frameworks (OpenAI, Anthropic,
+traceroot auto-instruments many model providers and agent frameworks (OpenAI, Anthropic,
 LangChain/LangGraph, and more). The installed SDK is the current list — read it with the one command below rather than fetching
 a docs page, which costs a network round trip to learn something the package already knows.
 Coverage changes over time, so don't assume a library is unsupported without looking.

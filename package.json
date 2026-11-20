@@ -1,7 +1,7 @@
 {
   "name": "@traceroot-ai/skills",
   "private": true,
-  "description": "TraceRoot skills for coding agents.",
+  "description": "traceroot skills for coding agents.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",

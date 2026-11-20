@@ -51,7 +51,7 @@ Other supported `instrumentModules` keys: `claudeAgentSDK`, `bedrock`, `openaiAg
 
 AI SDK 7 does not emit OpenTelemetry spans on its own. `experimental_telemetry: { isEnabled: true }` only notifies telemetry integrations, and none are registered until you add `@ai-sdk/otel`. Install that package at the same patch as `ai` (`ai@7.0.169` with `@ai-sdk/otel@1.0.169`). A mismatched pair fails to compile, because `OpenTelemetry` implements the `Telemetry` type from `ai`.
 
-Register it after `TraceRoot.initialize()`, so the spans use the provider TraceRoot set up:
+Register it after `TraceRoot.initialize()`, so the spans use the provider traceroot set up:
 
 ```typescript
 import { registerTelemetry } from 'ai';

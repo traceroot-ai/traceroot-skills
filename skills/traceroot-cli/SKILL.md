@@ -1,11 +1,11 @@
 ---
 name: traceroot-cli
 description: >
-  Read what TraceRoot has already recorded, from the terminal, with the `traceroot` CLI. Use when
+  Read what traceroot has already recorded, from the terminal, with the `traceroot` CLI. Use when
   the user asks what happened in a trace, whether an evaluation regressed, which evaluation runs or
   datasets exist, what a detector found, or anything that means querying spans — and once a repo is
   instrumented, whenever the question turns from "is tracing wired up" to "what do the traces say".
-  Also use when the user asks what the TraceRoot CLI can do.
+  Also use when the user asks what the traceroot CLI can do.
 allowed-tools:
   - Bash(traceroot --help)
   - Bash(traceroot status)
@@ -19,9 +19,9 @@ compatibility: >
   front of you.
 ---
 
-# TraceRoot CLI
+# traceroot CLI
 
-Read the TraceRoot platform from the terminal. This is a router: it names the command that answers a
+Read the traceroot platform from the terminal. This is a router: it names the command that answers a
 question and leaves the flags to `--help`.
 
 ## First, establish context

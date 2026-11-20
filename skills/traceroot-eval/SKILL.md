@@ -1,11 +1,11 @@
 ---
 name: traceroot-eval
 description: >
-  Write and run offline evaluations with the TraceRoot SDK. Use when the user wants to evaluate
+  Write and run offline evaluations with the traceroot SDK. Use when the user wants to evaluate
   an LLM app or agent, add evals or scorers, build an eval dataset or test cases, grade outputs
   with an LLM judge, check for regressions between prompt/model versions, or "add evals to my
   project" — for Python or TypeScript/Node.js. Covers datasets, scorers, LLM judges, running
-  `evaluate()`, and reading metric-first results on the TraceRoot platform.
+  `evaluate()`, and reading metric-first results on the traceroot platform.
 allowed-tools:
   - Bash(traceroot status)
 metadata:
@@ -13,14 +13,14 @@ metadata:
   version: "1.0"
 compatibility: >
   Python uses the `traceroot` package (pip); TypeScript/Node.js uses `@traceroot-ai/traceroot`
-  (npm). A run reports to TraceRoot and needs TRACEROOT_API_KEY, unless it asks to run locally.
+  (npm). A run reports to traceroot and needs TRACEROOT_API_KEY, unless it asks to run locally.
 ---
 
-# TraceRoot Eval
+# traceroot Eval
 
 Author an offline evaluation: a **dataset** of cases, a **task** that runs the system under test,
 and **scorers** that grade each output. `evaluate()` runs the task over every case, scores each
-result, and reports the run to the TraceRoot platform.
+result, and reports the run to the traceroot platform.
 
 Evaluation here is **trace-native**: every case runs as its own trace, with an
 `evaluation-item → task → scorer` span tree. An eval is a trace you can drill into, so a failing
@@ -51,7 +51,7 @@ Turn the workflow below into a checklist (TodoWrite) and execute it in order.
 ### 1. Precondition — credentials
 A run reports to the platform unless you ask for a local one.
 - Confirm `TRACEROOT_API_KEY` is set (environment or `.env`) — `traceroot status` reports whether
-  the SDK resolves it. If it is missing, ask the user to add it (TraceRoot UI → project settings).
+  the SDK resolves it. If it is missing, ask the user to add it (traceroot UI → project settings).
 - **While drafting, or with no key available, pass `local=True` / `local: true`.** The run executes
   in full and returns a complete result but reports nowhere — no credentials, no dataset publish,
   no run record. That is the supported way to run without a key; don't reach for a test transport.
@@ -65,7 +65,7 @@ A run reports to the platform unless you ask for a local one.
 - Detect the runtime (Python or TypeScript/Node.js).
 - Find the **task**: the function that takes one input and returns the output to grade (an agent
   entrypoint, a chat handler, a RAG `answer()`). One case in → one output out.
-- Find **real inputs** for cases: fixtures, test data, logged queries, or traces in the TraceRoot
+- Find **real inputs** for cases: fixtures, test data, logged queries, or traces in the traceroot
   UI. If none exist, ask the user — do not fabricate a dataset.
 - Each distinct quality question is one scorer.
 
